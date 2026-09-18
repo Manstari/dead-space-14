@@ -22,7 +22,7 @@ public sealed class TerminalBoundUserInterface : BoundUserInterface
         _window.FocusInput();
         if (!_entityManager.TryGetComponent<TerminalComponent>(Owner, out var terminal))
             return;
-        _window.AddColorfullText($"user@TEMPUser{terminal.UserIndex}:~$ ", "16C60C");
+        _window.AddOutput($"Welcome to TempOS 107.05 LTS\nSystem information\nMemory usage: {Random.Shared.Next(5, 10)}%\n IPv4 address for eth0: {terminal.IpAdress}");
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -45,6 +45,6 @@ public sealed class TerminalBoundUserInterface : BoundUserInterface
         SendMessage(new TerminalCommandMessage(command));
         if (!_entityManager.TryGetComponent<TerminalComponent>(Owner, out var terminal))
             return;
-        _window?.AddOutput($"user@TEMPUser{terminal.UserIndex}:~$ {command}\n");
+        _window?.AddCommand($"user@TEMPUser{terminal.UserIndex}:~$", command);
     }
 }
