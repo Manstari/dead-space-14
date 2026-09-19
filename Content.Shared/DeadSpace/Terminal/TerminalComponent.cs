@@ -15,11 +15,8 @@ public sealed partial class TerminalComponent : Component
     public int IpSecond;
     [AutoNetworkedField]
     public int IpThird;
-
     [AutoNetworkedField]
-    public string CurrentDir;
-    [AutoNetworkedField]
-    public string TopDir;
+    public string CurrentDir = "/";
 
     public string IpAdress => $"204.{IpFirst}.{IpSecond}.{IpThird}";
     public bool NetworkEnabled = true;

@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Shared.DeadSpace.Terminal;
 using Robust.Server.GameObjects;
+using Robust.Shared.Toolshed.Commands.GameTiming;
 
 namespace Content.Server.Terminal;
 
@@ -17,12 +18,14 @@ public sealed class TerminalSystem : EntitySystem
         public Action Deliver = default!;
     }
     private readonly List<PendingTransfer> _transfers = new();
+    private readonly Dictionary<EntityUid, Dictionary<string, string>> _files = new();
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<TerminalComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<TerminalComponent, TerminalCommandMessage>(OnCommand);
         SubscribeLocalEvent<TerminalComponent, ComponentShutdown>(OnShutdown);
+        SubscribeLocalEvent<TerminalComponent, TerminalSaveFileMessage>(OnSaveFile);
     }
 
     public override void Update(float frameTime)
@@ -43,6 +46,7 @@ public sealed class TerminalSystem : EntitySystem
     }
 
     private readonly HashSet<string> _ips = new();
+    private readonly Dictionary<EntityUid, HashSet<string>> _directories = new();
     private const float LanSpeedBPS = 100_000f;
     private const float BaseLatencySeconds = 0.05f;
     private const float SignalSpeedTilesPerSecond = 20f;
@@ -50,6 +54,8 @@ public sealed class TerminalSystem : EntitySystem
     private void OnShutdown(EntityUid uid, TerminalComponent comp, ComponentShutdown args)
     {
         _ips.Remove(comp.IpAdress);
+        _directories.Remove(uid);
+        _files.Remove(uid);
     }
 
     private float GetDistance(EntityUid sender, EntityUid receiver)
@@ -115,12 +121,190 @@ public sealed class TerminalSystem : EntitySystem
         }
         while (!_ips.Add(GetIp(comp)));
     }
+    private void GenerateDirs(EntityUid uid, TerminalComponent comp)
+    {
+        comp.CurrentDir = "/";
+        _directories[uid] = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "/",
+            "/home",
+            "/tmp",
+            "/etc",
+            "/bin"
+        };
+
+        _files[uid] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    }
 
     private void OnMapInit(EntityUid uid, TerminalComponent comp, MapInitEvent args)
     {
         GenerateIp(comp);
+        GenerateDirs(uid, comp);
         comp.UserIndex = Random.Shared.Next(1000, 10000);
         Dirty(uid, comp);
+    }
+
+    private string HandleLS(EntityUid uid, TerminalComponent comp)
+    {
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+            return $"{Loc.GetString("terminal-fs-unaviable")}";
+        var currentDir = comp.CurrentDir;
+        var prefix = currentDir == "/" ? "/" : $"{currentDir}/";
+
+        var directories = dirs.Where(path => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && path != currentDir).Select(path => path[prefix.Length..]).Where(path => !path.Contains('/'));
+        var fileNames = files.Keys.Where(path => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).Select(path => path[prefix.Length..]).Where(path => !path.Contains('/'));
+
+        var entries = directories.Concat(fileNames).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(path => path).ToArray();
+
+        return entries.Length == 0 ? "\n" : $"{string.Join('\n', entries)}\n";
+    }
+
+    private string HandleCat(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length == 0)
+            return $"{Loc.GetString("terminal-cat-usage")}\n";
+        if (args.Length > 1)
+            return $"{Loc.GetString("terminal-many-args")}\n";
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+            return $"{Loc.GetString("terminal-fs-unaviable")}\n";
+
+        var filePath = NormalizePath(comp.CurrentDir, args[0]);
+
+        if (dirs.Contains(filePath))
+            return $"{Loc.GetString("terminal-is-directory", ("args", args[0]))}";
+        if (!files.TryGetValue(filePath, out var content))
+            return $"{Loc.GetString("terminal-no-such-file")}";
+        if (string.IsNullOrEmpty(content))
+            return "\n";
+        return content.EndsWith('\n') ? content : $"{content}\n";
+    }
+
+    private static string NormalizePath(string currentDir, string path)
+    {
+        var combinedPath = path.StartsWith('/') ? path : $"{currentDir}/{path}";
+        var parts = combinedPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var normalized = new List<string>();
+
+        foreach (var part in parts)
+        {
+            if (part == ".")
+                continue;
+            if (part == "..")
+            {
+                if (normalized.Count > 0)
+                    normalized.RemoveAt(normalized.Count - 1);
+                continue;
+            }
+            normalized.Add(part);
+        }
+        return normalized.Count == 0 ? "/" : $"/{string.Join('/', normalized)}";
+    }
+
+    private void OnSaveFile(EntityUid uid, TerminalComponent comp, TerminalSaveFileMessage msg)
+    {
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+            return;
+
+        var filePath = NormalizePath(comp.CurrentDir, msg.Path);
+        var separator = filePath.LastIndexOf('/');
+        var parentDir = separator <= 0 ? "/" : filePath[..separator];
+
+        if (!dirs.Contains(parentDir))
+            return;
+        files[filePath] = msg.Content;
+
+        _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-nano-file-saved", ("filePath", filePath))}\n"));
+    }
+
+    private string HandleCD(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length == 0)
+            return $"{Loc.GetString("terminal-cd-usage")}\n";
+        if (args.Length > 1)
+            return $"{Loc.GetString("terminal-many-args")}\n";
+        if (!_directories.TryGetValue(uid, out var dirs))
+            return $"{Loc.GetString("terminal-fs-unaviable")}\n";
+        var targetDir = NormalizePath(comp.CurrentDir, args[0]);
+
+        if (!dirs.Contains(targetDir))
+            return $"{Loc.GetString("terminal-cd-no-such-dir", ("path", args[0]))}\n";
+
+        comp.CurrentDir = targetDir;
+        Dirty(uid, comp);
+        return string.Empty;
+    }
+
+    private string HandleTouch(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length == 0)
+            return $"{Loc.GetString("terminal-touch-usage")}\n";
+        if (args.Length > 1)
+            return $"{Loc.GetString("terminal-many-args")}\n";
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+            return $"{Loc.GetString("terminal-fs-unaviable")}\n";
+        var filepath = NormalizePath(comp.CurrentDir, args[0]);
+        if (dirs.Contains(filepath))
+            return $"{Loc.GetString("terminal-is-directory", ("args", args[0]))}";
+        var separator = filepath.LastIndexOf('/');
+        var parentDir = separator <= 0 ? "/" : filepath[..separator];
+
+        if (!dirs.Contains(parentDir))
+            return $"{Loc.GetString("terminal-parent-dir-not-exist", ("args", args[0]))}";
+        if (!files.ContainsKey(filepath))
+            files[filepath] = string.Empty;
+        return string.Empty;
+    }
+
+    private string HandleMKDir(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length == 0)
+            return $"{Loc.GetString("terminal-mkdir-usage")}\n";
+        if (args.Length > 1)
+            return $"{Loc.GetString("terminal-many-args")}\n";
+        if (!_directories.TryGetValue(uid, out var dirs))
+            return $"{Loc.GetString("terminal-fs-unaviable")}\n";
+        var newDir = NormalizePath(comp.CurrentDir, args[0]);
+        if (dirs.Contains(newDir))
+            return $"{Loc.GetString("terminal-dir-exists", ("args", args[0]))}\n";
+        var parentDir = newDir[..newDir.LastIndexOf('/')];
+        if (string.IsNullOrEmpty(parentDir))
+            parentDir = "/";
+        if (!dirs.Contains(parentDir))
+            return $"{Loc.GetString("terminal-parent-doesnt-exist", ("args", args[0]))}\n";
+        dirs.Add(newDir);
+        return string.Empty;
+    }
+
+    private void HandleNano(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length == 0)
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-nano-usage")}\n"));
+            return;
+        }
+        if (args.Length > 1)
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-many-args")}\n"));
+            return;
+        }
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-fs-unaviable")}\n"));
+            return;
+        }
+        var filePath = NormalizePath(comp.CurrentDir, args[0]);
+        var separator = filePath.LastIndexOf('/');
+        var parentDir = separator <= 0 ? "/" : filePath[..separator];
+
+        if (!dirs.Contains(parentDir))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-parent-dir-not-exist")}\n"));
+            return;
+        }
+
+        files.TryGetValue(filePath, out var content);
+
+        _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(string.Empty, filePath, content ?? string.Empty));
     }
 
     private void HandlePing(EntityUid sender, string[] args)
@@ -188,13 +372,24 @@ public sealed class TerminalSystem : EntitySystem
             HandlePing(uid, arguments);
             return;
         }
+        if (command.Equals("nano", StringComparison.OrdinalIgnoreCase))
+        {
+            HandleNano(uid, component, arguments);
+            return;
+        }
         var output = command switch
         {
-            "help" => "help\nls\nclear\nwhoami\nhostname\nifconfig\nping (ip address)\n",
+            "help" => $"help\nls\nclear\nwhoami\nhostname\nifconfig\nping (IP адрес)\ncd (путь до директории)\npwd\nls\nmkdir (Название создаваемой директории)\ntouch (Название создаваемого файла)\ncat (название файла)\nnano (название файла)",
             "clear" => "\x01CLEAR",
             "whoami" => $"User\n",
             "ifconfig" => $"{GetIp(component)}\n",
             "hostname" => $"TEMPUser{component.UserIndex}\n",
+            "pwd" => $"{component.CurrentDir}\n",
+            "ls" => HandleLS(uid, component),
+            "cd" => HandleCD(uid, component, arguments),
+            "mkdir" => HandleMKDir(uid, component, arguments),
+            "touch" => HandleTouch(uid, component, arguments),
+            "cat" => HandleCat(uid, component, arguments),
             _ => "command not found\n"
         };
 

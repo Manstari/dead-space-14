@@ -23,9 +23,26 @@ public sealed class TerminalCommandMessage : BoundUserInterfaceMessage
 public sealed class TerminalBoundUserInterfaceState : BoundUserInterfaceState
 {
     public string OutputText { get; }
+    public string? EditorPath { get; }
+    public string? EditorContent { get; }
 
-    public TerminalBoundUserInterfaceState(string outputText)
+    public TerminalBoundUserInterfaceState(string outputText, string? editorPath = null, string? editorContent = null)
     {
         OutputText = outputText;
+        EditorPath = editorPath;
+        EditorContent = editorContent;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class TerminalSaveFileMessage : BoundUserInterfaceMessage
+{
+    public string Path { get; }
+    public string Content { get; }
+
+    public TerminalSaveFileMessage(string path, string content)
+    {
+        Path = path;
+        Content = content;
     }
 }
