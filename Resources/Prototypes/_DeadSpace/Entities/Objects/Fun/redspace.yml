@@ -2,7 +2,7 @@
   parent: BaseItem
   id: RedSpaceTaipanClownBag
   name: редспейс мешок
-  decription: Мешок, основанный на технологии РедСпейса, сзади написано "Будьте осторожны в использовании, мы не несём ответственность за вашу жизнь!"
+  description: Мешок, основанный на технологии РедСпейса, сзади написано "Будьте осторожны в использовании, мы не несём ответственность за вашу жизнь!"
   components:
   - type: Sprite
     sprite: _DeadSpace/Objects/Fun/red-space-bag.rsi
