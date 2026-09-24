@@ -1,0 +1,33 @@
+- type: entity
+  parent: BaseItem
+  id: RedSpaceTaipanClownBag
+  name: редспейс мешок
+  decription: Мешок, основанный на технологии РедСпейса, сзади написано "Будьте осторожны в использовании, мы не несём ответственность за вашу жизнь!"
+  components:
+  - type: Sprite
+    sprite: _DeadSpace/Objects/Fun/red-space-bag.rsi
+    state: icon
+  - type: RandomSpawnOnUse
+    minItems: 2
+    maxItems: 5
+    items:
+    - TeslaMiniEnergyBall
+    - ClothingUnderwearBottomPantiesTaipanCommunicationsOfficer
+    - PlushieSilSharp
+    - PlushieSilRenaTakala
+    - FoamCutlass
+    - Akiplushie8
+    - SpeedLoaderCap
+    - RevolverCapGun
+    - BoxCartridgeCap
+    - ToyHammer
+    - WeaponSMGTommyGunCap
+    - LGBTQHandyFlag
+    - SoapSyndie
+    - SnapPopBox
+    - WeaponLauncherChinaLakeToy
+    - ToyNuke
+    - ToySword
+    - MobHonkBot
+  - type: UseDelay
+    delay: 120
