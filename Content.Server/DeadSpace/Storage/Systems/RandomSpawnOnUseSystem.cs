@@ -10,7 +10,6 @@ namespace Content.Server.DeadSpace.Storage;
 public sealed class RandomSpawnOnUseSystem : EntitySystem
 {
     [Dependency] private readonly IRobustRandom _random = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
 
     public override void Initialize()
