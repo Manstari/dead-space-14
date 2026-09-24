@@ -48102,7 +48102,7 @@ entities:
       parent: 6662
     - type: Physics
       canCollide: False
-- proto: LightReplacer
+- proto: LightReplacerEmpty
   entities:
   - uid: 6664
     components:
@@ -69172,7 +69172,7 @@ entities:
       parent: 2
     - type: Fixtures
       fixtures: {}
-- proto: WaterCoolerTransfer
+- proto: WaterCooler
   entities:
   - uid: 9857
     components:
