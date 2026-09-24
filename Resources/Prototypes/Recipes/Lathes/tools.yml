@@ -178,7 +178,7 @@
 - type: latheRecipe
   parent: BaseToolRecipe
   id: HolofanProjector
-  result: HolofanProjector #DS-14
+  result: HolofanProjectorEmpty
   completetime: 8
   materials:
     Steel: 300
@@ -239,7 +239,7 @@
   completetime: 2
   materials:
     Plastic: 200
-
+    
 - type: latheRecipe
   parent: BaseToolRecipe
   id: HoloprojectorField
