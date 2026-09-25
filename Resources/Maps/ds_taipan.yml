@@ -4,7 +4,7 @@ meta:
   engineVersion: 276.0.0
   forkId: ""
   forkVersion: ""
-  time: 09/24/2026 10:21:13
+  time: 09/25/2026 10:02:39
   entityCount: 10331
 maps:
 - 1
@@ -205,7 +205,7 @@ entities:
           version: 7
         2,-1:
           ind: 2,-1
-          tiles: AgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAGAAAAAAAABwAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAADAAAAAAAAAwAAAAAAAAMAAAAAAAAAgAAAAAAAAYAAAAAAAAGAAAAAAAABgAAAAAAAAcAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAwAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAAQAAAAAAAAHAAAAAAAABwAAAAAAAAcAAAAAAAAHAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAwAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABwAAAAAAAAYAAAAAAAAGAAAAAAAABwAAAAAAACwAAAAAAAArAAAAAAAAKgAAAAAAACwAAAAAAAAVAAAAAAAAKgAAAAAAABUAAAAAAAAqAAAAAAAAAgAAAAAAABAAAAAAAAAQAAAAAAAAEAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAAAcAAAAAAAACAAAAAAAALwAAAAAAAB8AAAAAAAAVAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAQAAAAAAAAEAAAAAAAABAAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAHAAAAAAAAAgAAAAAAACwAAAAAAAArAAAAAAAALwAAAAAAABUAAAAAAAAqAAAAAAAAFQAAAAAAACoAAAAAAAACAAAAAAAAEAAAAAAAABAAAAAAAAAQAAAAAAAAAgAAAAAAAAYAAAAAAAAGAAAAAAAABgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAACwAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAAAYAAAAAAAAVAAAAAAAALAAAAAAAACsAAAAAAAAVAAAAAAAALAAAAAAAABUAAAAAAAArAAAAAAAAAgAAAAAAAAIAAAAAAAAEAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABwAAAAAAAAYAAAAAAAAGAAAAAAAAHwAAAAAAAAIAAAAAAAAqAAAAAAAALAAAAAAAACoAAAAAAAAsAAAAAAAAKgAAAAAAAAIAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAAAIAAAAAAAACAAAAAAAALAAAAAAAACMAAAAAAAAjAAAAAAAAIwAAAAAAABUAAAAAAAAEAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAtAAAAAAAAAgAAAAAAAB8AAAAAAAAjAAAAAAAAIwAAAAAAACMAAAAAAAAfAAAAAAAAAgAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAMAAAAAAAAAIAAAAAAAAfAAAAAAAAIwAAAAAAACMAAAAAAAAjAAAAAAAAHwAAAAAAAAIAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAAIAAAAAAAAJAAAAAAAACQAAAAAAAAIAAAAAAAACAAAAAAAALAAAAAAAACMAAAAAAAAjAAAAAAAAIwAAAAAAABUAAAAAAAACAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAJAAAAAAAAAgAAAAAAACoAAAAAAAAsAAAAAAAAKgAAAAAAACwAAAAAAAAqAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAQAAAAAAAACAAAAAAAACQAAAAAAAAIAAAAAAAArAAAAAAAAFQAAAAAAACwAAAAAAAAVAAAAAAAAKwAAAAAAAAMAAAAAAAADAAAAAAAAAwAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAA==
+          tiles: AgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAGAAAAAAAABwAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAADAAAAAAAAAwAAAAAAAAMAAAAAAAAAgAAAAAAAAYAAAAAAAAGAAAAAAAABgAAAAAAAAcAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAwAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAAQAAAAAAAAHAAAAAAAABwAAAAAAAAcAAAAAAAAHAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAwAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABwAAAAAAAAYAAAAAAAAGAAAAAAAABwAAAAAAACwAAAAAAAArAAAAAAAAKgAAAAAAACwAAAAAAAAVAAAAAAAAKgAAAAAAABUAAAAAAAAqAAAAAAAAAgAAAAAAABAAAAAAAAAQAAAAAAAAEAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAAAcAAAAAAAACAAAAAAAALwAAAAAAAB8AAAAAAAAVAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAQAAAAAAAAEAAAAAAAABAAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAHAAAAAAAAAgAAAAAAACwAAAAAAAArAAAAAAAALwAAAAAAABUAAAAAAAAqAAAAAAAAFQAAAAAAACoAAAAAAAACAAAAAAAAEAAAAAAAABAAAAAAAAAQAAAAAAAAAgAAAAAAAAYAAAAAAAAGAAAAAAAABgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAACwAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAAAYAAAAAAAAVAAAAAAAALAAAAAAAACsAAAAAAAAVAAAAAAAALAAAAAAAABUAAAAAAAArAAAAAAAAAgAAAAAAAAIAAAAAAAAEAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAABwAAAAAAAAYAAAAAAAAGAAAAAAAAHwAAAAAAAAIAAAAAAAAqAAAAAAAALAAAAAAAACoAAAAAAAAsAAAAAAAAKgAAAAAAAAIAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAAIAAAAAAAAGAAAAAAAABgAAAAAAACwAAAAAAAACAAAAAAAALAAAAAAAACMAAAAAAAAjAAAAAAAAIwAAAAAAABUAAAAAAAAEAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAACAAAAAAAABgAAAAAAAAYAAAAAAAAtAAAAAAAAAgAAAAAAAB8AAAAAAAAjAAAAAAAAIwAAAAAAACMAAAAAAAAfAAAAAAAAAgAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAMAAAAAAAAAIAAAAAAAAfAAAAAAAAIwAAAAAAACMAAAAAAAAjAAAAAAAAHwAAAAAAAAIAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAAIAAAAAAAAJAAAAAAAACQAAAAAAAAIAAAAAAAACAAAAAAAALAAAAAAAACMAAAAAAAAjAAAAAAAAIwAAAAAAABUAAAAAAAACAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAAJAAAAAAAAAgAAAAAAACoAAAAAAAAsAAAAAAAAKgAAAAAAACwAAAAAAAAqAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAIAAAAAAAACAAAAAAAAAgAAAAAAAAQAAAAAAAACAAAAAAAACQAAAAAAAAIAAAAAAAArAAAAAAAAFQAAAAAAACwAAAAAAAAVAAAAAAAAKwAAAAAAAAMAAAAAAAADAAAAAAAAAwAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAAwAAAAAAAAMAAAAAAAADAAAAAAAAA==
           version: 7
         2,-2:
           ind: 2,-2
@@ -4867,7 +4867,8 @@ entities:
           -7,-3:
             0: 61567
           -7,-2:
-            0: 57599
+            0: 57535
+            2: 64
           -7,-5:
             0: 28782
           -6,-4:
@@ -5983,9 +5984,16 @@ entities:
   - uid: 28
     components:
     - type: Transform
-      rot: 3.141592653589793 rad
-      pos: -5.5,-21.5
+      anchored: False
+      rot: 0.48643045524723183 rad
+      pos: -5.1588354,-22.464226
       parent: 2
+    - type: Physics
+      angularDamping: 8
+      linearDamping: 8
+      bodyType: Dynamic
+    - type: Pullable
+      prevFixedRotation: True
   - uid: 29
     components:
     - type: Transform
@@ -6054,9 +6062,16 @@ entities:
   - uid: 40
     components:
     - type: Transform
-      rot: 3.141592653589793 rad
-      pos: -3.5,-21.5
+      anchored: False
+      rot: -3.141592653589793 rad
+      pos: -5.5,-21.5
       parent: 2
+    - type: Physics
+      angularDamping: 8
+      linearDamping: 8
+      bodyType: Dynamic
+    - type: Pullable
+      prevFixedRotation: True
   - uid: 41
     components:
     - type: Transform
@@ -9887,7 +9902,7 @@ entities:
   - uid: 569
     components:
     - type: Transform
-      pos: -27.574162,-8.279547
+      pos: -27.307226,-8.083201
       parent: 2
     - type: Physics
       canCollide: False
@@ -9906,6 +9921,13 @@ entities:
     components:
     - type: Transform
       pos: -28.542631,1.6244996
+      parent: 2
+    - type: Physics
+      canCollide: False
+  - uid: 596
+    components:
+    - type: Transform
+      pos: -23.453253,-14.448963
       parent: 2
     - type: Physics
       canCollide: False
@@ -10048,15 +10070,6 @@ entities:
     components:
     - type: Transform
       pos: -11.484207,-25.296
-      parent: 2
-    - type: Physics
-      canCollide: False
-- proto: BoxZiptie
-  entities:
-  - uid: 596
-    components:
-    - type: Transform
-      pos: -23.451712,-14.433303
       parent: 2
     - type: Physics
       canCollide: False
@@ -26486,13 +26499,19 @@ entities:
   - uid: 3637
     components:
     - type: Transform
+      anchored: True
       pos: -29.5,3.5
       parent: 2
+    - type: Physics
+      bodyType: Static
   - uid: 3638
     components:
     - type: Transform
+      anchored: True
       pos: -31.5,3.5
       parent: 2
+    - type: Physics
+      bodyType: Static
   - uid: 3639
     components:
     - type: Transform
@@ -28028,7 +28047,7 @@ entities:
   - uid: 10331
     components:
     - type: Transform
-      pos: -8.5,4.5
+      pos: -5.5,-1.5
       parent: 2
 - proto: CustomizableSpawnerTaipanCommunicationsOfficer
   entities:
@@ -33014,15 +33033,6 @@ entities:
     components:
     - type: Transform
       pos: 30.7209,-5.4384875
-      parent: 2
-    - type: Physics
-      canCollide: False
-- proto: FoodBowlBig
-  entities:
-  - uid: 4632
-    components:
-    - type: Transform
-      pos: -3.3957272,3.7395186
       parent: 2
     - type: Physics
       canCollide: False
@@ -47540,6 +47550,8 @@ entities:
     - type: Transform
       pos: -17.5,-18.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal: []
     - type: EntityStorage
       air:
         volume: 200
@@ -47573,6 +47585,7 @@ entities:
     - type: Transform
       pos: -10.5,-3.5
       parent: 2
+    - type: ViewSubscriber
   - uid: 6578
     components:
     - type: Transform
@@ -47941,7 +47954,7 @@ entities:
   - uid: 6629
     components:
     - type: Transform
-      pos: -4.583971,6.6579895
+      pos: -4.629406,6.6605387
       parent: 2
 - proto: KitchenReagentGrinder
   entities:
@@ -48102,7 +48115,7 @@ entities:
       parent: 6662
     - type: Physics
       canCollide: False
-- proto: LightReplacerEmpty
+- proto: LightReplacer
   entities:
   - uid: 6664
     components:
@@ -48110,7 +48123,7 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 35.036583,1.2480555
       parent: 2
-- proto: LockableButtonAtmospherics
+- proto: LockableButtonExternal
   entities:
   - uid: 6665
     components:
@@ -48119,10 +48132,10 @@ entities:
       parent: 2
     - type: DeviceLinkSource
       linkedPorts:
-        538:
+        539:
         - - Pressed
           - Toggle
-        539:
+        538:
         - - Pressed
           - Toggle
         534:
@@ -48132,19 +48145,6 @@ entities:
       fixtures: {}
 - proto: LockerSyndicatePersonal
   entities:
-  - uid: 6666
-    components:
-    - type: Transform
-      pos: -23.5,-16.5
-      parent: 2
-    - type: EntityStorage
-      air:
-        volume: 200
-        immutable: False
-        temperature: 293.14673
-        moles:
-          Oxygen: 1.7459903
-          Nitrogen: 6.568249
   - uid: 10045
     components:
     - type: Transform
@@ -48186,6 +48186,9 @@ entities:
     - type: Transform
       pos: -8.5,5.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanService
 - proto: LockerTaipanCargotechFilled
   entities:
   - uid: 6673
@@ -48229,6 +48232,9 @@ entities:
     - type: Transform
       pos: -21.5,-8.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanCommunicationsOfficer
 - proto: LockerTaipanFreezer
   entities:
   - uid: 6680
@@ -48310,11 +48316,19 @@ entities:
       parent: 2
 - proto: LockerTaipanSteel
   entities:
+  - uid: 6666
+    components:
+    - type: Transform
+      pos: -23.5,-16.5
+      parent: 2
   - uid: 6693
     components:
     - type: Transform
+      anchored: True
       pos: -31.5,4.5
       parent: 2
+    - type: Physics
+      bodyType: Static
   - uid: 6694
     components:
     - type: Transform
@@ -48328,27 +48342,48 @@ entities:
   - uid: 6696
     components:
     - type: Transform
+      anchored: True
       pos: -29.5,4.5
       parent: 2
+    - type: Physics
+      bodyType: Static
 - proto: LockerTaipanTechnicalOperationsSupervisorFilled
   entities:
   - uid: 6697
     components:
     - type: Transform
+      anchored: True
       pos: 44.5,-6.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanTechnicalOperationsSupervisor
+    - type: Physics
+      bodyType: Static
 - proto: LockerTaipanTechnicianFilled
   entities:
   - uid: 6698
     components:
     - type: Transform
+      anchored: True
       pos: 34.5,-3.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanEngineering
+    - type: Physics
+      bodyType: Static
   - uid: 6699
     components:
     - type: Transform
+      anchored: True
       pos: 34.5,-4.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanEngineering
+    - type: Physics
+      bodyType: Static
 - proto: LootSpawnerMedicalClassy
   entities:
   - uid: 6700
@@ -54551,10 +54586,8 @@ entities:
   - uid: 7624
     components:
     - type: Transform
-      pos: -27.220448,-8.2709465
+      pos: -27.818665,-8.024204
       parent: 2
-    - type: Physics
-      canCollide: False
   - uid: 7625
     components:
     - type: Transform
@@ -54565,7 +54598,7 @@ entities:
   - uid: 7626
     components:
     - type: Transform
-      pos: -27.300316,-8.028406
+      pos: -27.6154,-8.03076
       parent: 2
     - type: Physics
       canCollide: False
@@ -54988,7 +55021,7 @@ entities:
   - uid: 7669
     components:
     - type: Transform
-      pos: -4.614477,3.6770186
+      pos: -4.7724037,3.6570625
       parent: 2
     - type: Physics
       canCollide: False
@@ -54997,7 +55030,7 @@ entities:
   - uid: 7670
     components:
     - type: Transform
-      pos: -4.051977,3.7395186
+      pos: -4.260965,3.6701732
       parent: 2
     - type: Physics
       canCollide: False
@@ -55240,7 +55273,7 @@ entities:
   - uid: 7697
     components:
     - type: Transform
-      pos: -4.3087826,6.4928765
+      pos: -4.344181,6.4442163
       parent: 2
     - type: Physics
       canCollide: False
@@ -57803,6 +57836,15 @@ entities:
     - type: Transform
       pos: -25.5,-6.5
       parent: 2
+    - type: EntityStorage
+      air:
+        volume: 200
+        immutable: False
+        temperature: 293.14673
+        moles:
+          Oxygen: 1.7459903
+          Nitrogen: 6.568249
+    - type: ViewSubscriber
 - proto: SuitStorageTaipanParamedicFilled
   entities:
   - uid: 8077
@@ -57839,6 +57881,9 @@ entities:
     - type: Transform
       pos: 34.5,-2.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanEngineering
   - uid: 8083
     components:
     - type: Transform
@@ -57849,6 +57894,9 @@ entities:
     - type: Transform
       pos: 34.5,-5.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - TaipanEngineering
 - proto: SurveillanceCameraCommand
   entities:
   - uid: 8085
@@ -58890,15 +58938,15 @@ entities:
     - type: Transform
       pos: -5.5,3.5
       parent: 2
-  - uid: 8189
-    components:
-    - type: Transform
-      pos: -2.5,3.5
-      parent: 2
   - uid: 8190
     components:
     - type: Transform
       pos: 9.5,-37.5
+      parent: 2
+  - uid: 8333
+    components:
+    - type: Transform
+      pos: -3.5,3.5
       parent: 2
 - proto: SyndicatePersonalAI
   entities:
@@ -59731,17 +59779,11 @@ entities:
       rot: -1.5707963267948966 rad
       pos: -4.5,3.5
       parent: 2
-  - uid: 8333
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: -3.5,3.5
-      parent: 2
   - uid: 8334
     components:
     - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: -2.5,3.5
+      rot: 3.141592653589793 rad
+      pos: -3.5,3.5
       parent: 2
   - uid: 8335
     components:
@@ -60348,6 +60390,15 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 43.5,-4.5
       parent: 2
+- proto: TaipanCommunicationsOfficerIDcard
+  entities:
+  - uid: 4632
+    components:
+    - type: Transform
+      pos: -27.4859,-8.501098
+      parent: 2
+    - type: Physics
+      canCollide: False
 - proto: TaipanLeftLegBorg
   entities:
   - uid: 8441
@@ -60997,6 +61048,10 @@ entities:
     - type: Transform
       pos: -27.5,-16.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - SyndicateAgent
+      - - TaipanService
   - uid: 8511
     components:
     - type: Transform
@@ -61036,6 +61091,16 @@ entities:
     - type: Transform
       pos: -25.5,-16.5
       parent: 2
+- proto: VendingMachineChefvend
+  entities:
+  - uid: 8189
+    components:
+    - type: Transform
+      pos: -2.5,3.5
+      parent: 2
+    - type: AccessReader
+      accessListsOriginal:
+      - - Service
 - proto: VendingMachineChemicalsSyndicate
   entities:
   - uid: 8518
@@ -61139,8 +61204,11 @@ entities:
   - uid: 8535
     components:
     - type: Transform
+      anchored: False
       pos: 27.5,-3.5
       parent: 2
+    - type: Physics
+      bodyType: Dynamic
   - uid: 8536
     components:
     - type: Transform
@@ -61226,8 +61294,11 @@ entities:
   - uid: 8548
     components:
     - type: Transform
+      anchored: False
       pos: 26.5,-3.5
       parent: 2
+    - type: Physics
+      bodyType: Dynamic
 - proto: VendingMachineTankDispenserEngineering
   entities:
   - uid: 8549
@@ -69177,8 +69248,13 @@ entities:
   - uid: 9857
     components:
     - type: Transform
+      anchored: True
       pos: 27.5,-5.5
       parent: 2
+    - type: Physics
+      bodyType: Static
+- proto: WaterCoolerTransfer
+  entities:
   - uid: 9858
     components:
     - type: Transform
