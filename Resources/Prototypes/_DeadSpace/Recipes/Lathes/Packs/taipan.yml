@@ -225,6 +225,12 @@
   - MaterialDiamond
 
 - type: latheRecipePack
+  id: TaipanRedspaceSmelting
+  recipes:
+  - SheetRedspaceCrystal1
+  - RedspaceCrystalRaw1
+
+- type: latheRecipePack
   id: TaipanAdvancedSmelting
   recipes:
   - SheetPlasteel1
