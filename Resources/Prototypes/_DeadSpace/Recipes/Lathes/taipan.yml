@@ -637,6 +637,16 @@
     Silver: 150
 
 - type: latheRecipe
+  parent: BaseToolRecipe
+  id: TaipanMultitool
+  result: TaipanMultitool
+  completetime: 10
+  materials:
+    Steel: 250
+    Plastic: 200
+    Glass: 100
+
+- type: latheRecipe
   id: SyndiHypo
   result: SyndiHypo
   completetime: 10
