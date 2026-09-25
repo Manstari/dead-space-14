@@ -71,18 +71,7 @@
     snapCardinals: true
     layers:
     - state: icon
-      map: ["enum.LatheVisualLayers.IsRunning"].
-  - type: Fixtures
-    fixtures:
-      fix1:
-        shape:
-          !type:PhysShapeAabb
-          bounds: "-0.50,-0.70,0.50,0.70"
-        density: 190
-        mask:
-        - MachineMask
-        layer:
-          - MachineLayer
+      map: ["enum.LatheVisualLayers.IsRunning"]
   - type: Machine
     board: AutolatheMachineCircuitboardTaipan
   - type: MaterialStorage
