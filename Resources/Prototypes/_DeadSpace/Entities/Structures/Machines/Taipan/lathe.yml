@@ -84,7 +84,7 @@
         layer:
           - MachineLayer
   - type: Machine
-    board: AutolatheMachineCircuitboardTaipan
+    board: RedSpaceMachineCircuitboardTaipan
   - type: MaterialStorage
     whitelist:
       tags:
@@ -92,6 +92,7 @@
         - RawMaterial
         - Ingot
         - ArtifactFragment
+        - OreUranium
   - type: ResearchClient
     isTaipan: true
   - type: Lathe
