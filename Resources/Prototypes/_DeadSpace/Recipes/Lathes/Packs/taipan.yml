@@ -368,6 +368,7 @@
   - HypoDart
   - DefibrillatorSyndicate
   - DrinkShakerSyndie
+  - RedspaceBeaker
 
 ## Cloning
 - type: latheRecipePack
@@ -431,12 +432,14 @@
   - HandHeldMassScanner
   - ClothingMaskWeldingGas
   - SignallerAdvanced
+  - SignallerRedspace
   - ClothingEyesHudTaipanDiagnostic
   - ClothingEyesHudTaipanMedical
   - ClothingEyesHudTaipanRecruit
   - ClothingEyesHudTaipanResearch
   - ClothingEyesHudTaipanAdvanced
   - ClothingEyesPNVAdvSyndicate
+  - ClothingBackpackRedspace
   - EmagTaipanLimited
   - ChameleonPDA
   - ChameleonProjector
