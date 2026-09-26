@@ -19,8 +19,6 @@
     time: 36000 # 10 hours
   access:
   - TaipanService
-  accessGroups:
-  - TaipanAccess
   special:
   - !type:AddImplantSpecial
     implants: [ ChameleonControllerImplant ]
@@ -48,17 +46,17 @@
 - type: startingGear
   id: TaipanClownGear
   equipment:
-    head: ClothingHeadHatChameleon
-    mask: ClothingMaskGasChameleon
-    outerClothing: ClothingOuterChameleon
+    head: ClothingHeadHatTaipanClownChameleon
+    mask: ClothingTaipanMaskClownChameleon
+    outerClothing: ClothingTaipanClownOuterChameleon
     socks: ClothingUnderwearSocksChef
     underwearb: ClothingUnderwearBottomBoxersClown
-    gloves: ClothingHandsChameleon
-    jumpsuit: ClothingUniformJumpsuitChameleon
-    shoes: ClothingShoesChameleon
+    gloves: ClothingHandsTaipanClownChameleon
+    jumpsuit: ClothingUniformTaipanClownJumpsuitChameleon
+    shoes: ClothingShoesTaipanClownChameleon
     ears: ClothingHeadsetTaipan
-    back: ClothingBackpackChameleon
-    id: ChameleonAgentPDA
+    back: ClothingBackpackTaipanClownChameleon
+    id: TaipanClownPDA
   storage:
     back:
     - BoxSurvivalTaipan
