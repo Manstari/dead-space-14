@@ -21,6 +21,7 @@
   id: ClothingBackpackRedspace
   name: бездонный рюкзак
   description: Рюкзак, что имеет огроооомную пропасть внутрь, как бы то ни было удивительно, имеет дно, от него пахнет корицей.
+  suffix: Тайпан
   components:
   - type: Sprite
     sprite: Clothing/Back/Backpacks/holding.rsi

@@ -243,7 +243,7 @@
     - state: icon
   - type: Item
     size: Small
-    sptite: _DeadSpace/Objects/Tools/red_multitool.rsi
+    sprite: _DeadSpace/Objects/Tools/red_multitool.rsi
   - type: Clothing
     sprite: _DeadSpace/Objects/Tools/red_multitool.rsi
     quickEquip: false

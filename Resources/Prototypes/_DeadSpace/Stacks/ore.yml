@@ -18,7 +18,3 @@
   name: stack-redspace
   icon: { sprite: /Textures/_DeadSpace/Objects/Materials/redspace-crystal-raw.rsi, state: redspace_crystal_raw }
   spawn: RedspaceCrystalRaw1
-  components:
-  - type: Tag
-    tags:
-    - RawMaterial
