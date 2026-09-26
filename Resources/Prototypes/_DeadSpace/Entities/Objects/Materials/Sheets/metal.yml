@@ -284,6 +284,12 @@
   - type: PhysicalComposition
     materialComposition:
       RedspaceCrystal: 100
+  - type: PointLight
+    radius: 5.0
+    energy: 10.0
+    color: "#b80606"
+    castShadows: false
+    netsync: false
   - type: Stack
     stackType: ClearRedspaceCrystal
   - type: Sprite

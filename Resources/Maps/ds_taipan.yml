@@ -4,7 +4,7 @@ meta:
   engineVersion: 276.0.0
   forkId: ""
   forkVersion: ""
-  time: 09/25/2026 16:17:49
+  time: 09/25/2026 16:27:24
   entityCount: 10331
 maps:
 - 1
@@ -5983,9 +5983,14 @@ entities:
   - uid: 28
     components:
     - type: Transform
-      rot: 3.141592653589793 rad
-      pos: -5.5,-21.5
+      rot: -3.141592653589793 rad
+      pos: -3.5,-21.5
       parent: 2
+    - type: Physics
+      angularDamping: 8
+      linearDamping: 8
+    - type: Pullable
+      prevFixedRotation: True
   - uid: 29
     components:
     - type: Transform
@@ -6054,9 +6059,14 @@ entities:
   - uid: 40
     components:
     - type: Transform
-      rot: 3.141592653589793 rad
-      pos: -3.5,-21.5
+      rot: -3.141592653589793 rad
+      pos: -5.5,-21.5
       parent: 2
+    - type: Physics
+      angularDamping: 8
+      linearDamping: 8
+    - type: Pullable
+      prevFixedRotation: True
   - uid: 41
     components:
     - type: Transform
@@ -48099,7 +48109,7 @@ entities:
       parent: 6662
     - type: Physics
       canCollide: False
-- proto: LightReplacer
+- proto: LightReplacerFilled
   entities:
   - uid: 6664
     components:
@@ -48323,6 +48333,8 @@ entities:
       anchored: True
       pos: -29.5,4.5
       parent: 2
+    - type: AccessReader
+      accessListsOriginal: []
     - type: Physics
       bodyType: Static
 - proto: LockerTaipanTechnicalOperationsSupervisorFilled

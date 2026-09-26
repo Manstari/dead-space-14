@@ -68,6 +68,12 @@
   - type: PhysicalComposition
     materialComposition:
       RawRedspaceCrystal: 300
+  - type: PointLight
+    radius: 1.0
+    energy: 2.0
+    color: "#821111"
+    castShadows: false
+    netsync: false
   - type: Item
     heldPrefix: redspace_crystal_raw
   - type: Tag
