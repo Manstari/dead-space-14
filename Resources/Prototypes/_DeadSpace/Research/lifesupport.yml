@@ -246,7 +246,7 @@
     state: pod_0
   discipline: TaipanLifeSupport
   tier: 3
-  cost: 30000
+  cost: 20000
   diskAvailable: false
   recipeUnlocks:
   - CloningPodMachineCircuitboard

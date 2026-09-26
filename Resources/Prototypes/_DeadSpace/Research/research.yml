@@ -156,6 +156,19 @@
   - TaipanEnergyDaggers
 
 - type: technology
+  id: TaipanRedspace
+  name: research-technology-redspace
+  icon:
+    sprite: _DeadSpace/Objects/Materials/redspace-crystal-raw.rsi
+    state: redspace_crystal_raw
+  discipline: TaipanResearch
+  tier: 3
+  cost: 25000
+  diskAvailable: false
+  recipeUnlocks:
+  - RedSpaceMachineCircuitboardTaipan
+
+- type: technology
   id: TaipanEmag
   name: research-technology-emag
   icon:

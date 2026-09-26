@@ -254,6 +254,7 @@
   - PhotocopierMachineCircuitboard
   - SurveillanceCameraMonitorCircuitboardTaipan
   - TaipanHolopadMachineCircuitboard
+  - RedSpaceMachineCircuitboardTaipan
 
 - type: latheRecipePack
   id: TaipanServiceBoards
