@@ -331,20 +331,6 @@
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
-  id: LoadoutJanitorHouseman
-  categories: [ HideSpawnMenu ]
-  name: Горничный
-  description: Специализация уборщика на уборке в кабинетах.
-
-- type: entity
-  parent: BaseLoadoutJanitorSpecialization
-  id: LoadoutJanitorHousemaid
-  categories: [ HideSpawnMenu ]
-  name: Горничная
-  description: Специализация уборщика на уборке в кабинетах.
-
-- type: entity
-  parent: BaseLoadoutJanitorSpecialization
   id: LoadoutJanitorCleaner
   categories: [ HideSpawnMenu ]
   name: Клинер
@@ -363,18 +349,6 @@
   categories: [ HideSpawnMenu ]
   name: Дезинсектор
   description: Специализация уборщика на борьбе с вредителями и санитарной обработке.
-
-- type: loadout
-  id: JanitorTitleHousemaid
-  dummyEntity: LoadoutJanitorHousemaid
-  effects:
-  - !type:JobTitleLoadoutEffect
-    title: job-title-janitor-housemaid
-  - !type:JobRequirementLoadoutEffect
-    requirement:
-      !type:RoleTimeRequirement
-      role: JobJanitor
-      time: 18000
 
 - type: loadout
   id: JanitorTitlePlumber
@@ -412,18 +386,6 @@
       role: JobJanitor
       time: 18000
 
-- type: loadout
-  id: JanitorTitleHouseman
-  dummyEntity: LoadoutJanitorHouseman
-  effects:
-  - !type:JobTitleLoadoutEffect
-    title: job-title-janitor-houseman
-  - !type:JobRequirementLoadoutEffect
-    requirement:
-      !type:RoleTimeRequirement
-      role: JobJanitor
-      time: 18000
-
 - type: loadoutGroup
   id: JanitorSpecialization
   name: loadout-group-janitor-specialization
@@ -433,8 +395,6 @@
   - JanitorTitleCleaner
   - JanitorTitleDisinfector
   - JanitorTitlePlumber
-  - JanitorTitleHousemaid
-  - JanitorTitleHouseman
 
 # Сервисный работник
 - type: entity
