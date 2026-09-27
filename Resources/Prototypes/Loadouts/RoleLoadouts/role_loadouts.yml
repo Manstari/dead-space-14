@@ -172,6 +172,7 @@
   id: JobJanitor
   groups:
   - GroupTankHarness
+  - JanitorSpecialization #DS-14
   - JanitorHead
   - JanitorJumpsuit
   - JanitorGloves
