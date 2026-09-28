@@ -1167,3 +1167,100 @@
   loadouts:
   - ClownTitleComedian
   - ClownTitlePrankster
+
+# Репортёр
+- type: entity
+  abstract: true
+  id: BaseLoadoutReporterSpecialization
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    sprite: Interface/Misc/job_icons.rsi
+    state: Reporter
+
+- type: entity
+  parent: BaseLoadoutReporterSpecialization
+  id: LoadoutReporterJournalist
+  categories: [ HideSpawnMenu ]
+  name: Журналист
+  description: Специализация репортёра на .
+
+- type: entity
+  parent: BaseLoadoutReporterSpecialization
+  id: LoadoutReporterСorrespondent
+  categories: [ HideSpawnMenu ]
+  name: Корреспондент
+  description: Специализация репортёра на .
+
+- type: entity
+  parent: BaseLoadoutReporterSpecialization
+  id: LoadoutReporterTVShow
+  categories: [ HideSpawnMenu ]
+  name: Телеведущий
+  description: Специализация репортёра на .
+
+- type: entity
+  parent: BaseLoadoutReporterSpecialization
+  id: LoadoutReporterRadioShow
+  categories: [ HideSpawnMenu ]
+  name: Радиоведущий
+  description: Специализация репортёра на .
+
+- type: loadout
+  id: ReporterTitleJournalist
+  dummyEntity: LoadoutReporterJournalist
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-reporter-journalist
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobReporter
+      time: 18000
+
+- type: loadout
+  id: ReporterTitleСorrespondent
+  dummyEntity: LoadoutReporterСorrespondent
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-reporter-correspondent
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobReporter
+      time: 18000
+
+- type: loadout
+  id: ReporterTitleTVShow
+  dummyEntity: LoadoutReporterTVShow
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-reporter-tvshow
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobReporter
+      time: 18000
+
+- type: loadout
+  id: ReporterTitleRadioShow
+  dummyEntity: LoadoutReporterRadioShow
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-reporter-radioshow
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobReporter
+      time: 18000
+
+- type: loadoutGroup
+  id: ReporterSpecialization
+  name: loadout-group-reporter-specialization
+  minLimit: 0
+  maxLimit: 1
+  loadouts:
+  - ReporterTitleJournalist
+  - ReporterTitleСorrespondent
+  - ReporterTitleTVShow
+  - ReporterTitleRadioShow

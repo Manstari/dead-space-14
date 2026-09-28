@@ -13,7 +13,7 @@ loadout-group-atmospheric-specialization = Атмосферный техник, 
 loadout-group-librarian-specialization = Библиотекарь, специализация
 loadout-group-psychologist-specialization = Психолог, специализация
 loadout-group-clown-specialization = Клоун, специализация
-
+loadout-group-reporter-specialization = Репортёр, специализация
 
 # Повар
 job-title-chef-confectioner = Кондитер
@@ -89,3 +89,9 @@ job-title-psychologist-psychiatrist = Психиатр
 # Клоун
 job-title-clown-comedian = Комик
 job-title-clown-prankster = Пранкер
+
+# Репортёр
+job-title-reporter-journalist = Журналист
+job-title-reporter-correspondent = Корреспондент
+job-title-reporter-radioshow = Радиоведущий
+job-title-reporter-tvshow = Телеведущий
