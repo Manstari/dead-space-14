@@ -702,15 +702,6 @@
     Plastic: 50
 
 - type: latheRecipe
-  id: TaipanLauncherSyringe
-  result: LauncherSyringe
-  completetime: 15
-  materials:
-    Titanium: 500
-    Plastic: 300
-    Gold: 200
-
-- type: latheRecipe
   id: DrinkShakerSyndie
   result: DrinkShakerSyndie
   completetime: 5
