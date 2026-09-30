@@ -77,6 +77,20 @@
   - RedspaceBeaker
 
 # Tier 2
+- type: technology
+  id: TaipanLauncherSyringe
+  name: research-technology-launcher-syringe
+  icon:
+    sprite: Objects/Weapons/Guns/Cannons/syringe_gun.rsi
+    state: syringe_gun
+  discipline: TaipanLifeSupport
+  tier: 2
+  cost: 10000
+  diskAvailable: false
+  recipeUnlocks:
+  - TaipanLauncherSyringe
+  - TaipanMiniSyringe
+
 
 - type: technology
   id: TaipanBasicHypospray

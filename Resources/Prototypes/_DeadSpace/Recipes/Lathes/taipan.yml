@@ -686,6 +686,31 @@
     Gold: 200
 
 - type: latheRecipe
+  id: TaipanLauncherSyringe
+  result: TaipanLauncherSyringe
+  completetime: 15
+  materials:
+    Titanium: 250
+    Plastic: 300
+    Silver: 200
+
+- type: latheRecipe
+  id: TaipanMiniSyringe
+  result: MiniSyringe
+  completetime: 15
+  materials:
+    Plastic: 50
+
+- type: latheRecipe
+  id: TaipanLauncherSyringe
+  result: LauncherSyringe
+  completetime: 15
+  materials:
+    Titanium: 500
+    Plastic: 300
+    Gold: 200
+
+- type: latheRecipe
   id: DrinkShakerSyndie
   result: DrinkShakerSyndie
   completetime: 5
