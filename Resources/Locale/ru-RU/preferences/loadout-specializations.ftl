@@ -35,7 +35,7 @@ job-title-doctor-nurse = Медсестра
 job-title-doctor-male-nurse = Медбрат
 
 # уборщик
-job-title-janitor-disinfector = Дизинфектор
+job-title-janitor-exterminator = Дезинсектор
 job-title-janitor-cleaner = Клинер
 job-title-janitor-plumber = Сантехник
 
