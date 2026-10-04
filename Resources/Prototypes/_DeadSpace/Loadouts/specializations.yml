@@ -334,7 +334,7 @@
   id: LoadoutJanitorCleaner
   categories: [ HideSpawnMenu ]
   name: Клинер
-  description: Специализация уборщика на  поддержании чистоты и порядка в помещениях.
+  description: Специализация уборщика на поддержании чистоты и порядка в помещениях.
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
