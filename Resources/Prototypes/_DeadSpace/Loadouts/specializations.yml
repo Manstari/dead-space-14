@@ -217,7 +217,7 @@
   id: LoadoutDoctorMaleNurse
   categories: [ HideSpawnMenu ]
   name: Медбрат
-  description: Специализация врача на братком уходе.
+  description: Специализация врача на братском уходе.
 
 - type: loadout
   id: DoctorTitleTherapist
