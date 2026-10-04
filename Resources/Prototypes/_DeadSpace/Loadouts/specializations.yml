@@ -345,7 +345,7 @@
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
-  id: LoadoutJanitorDisinfector
+  id: LoadoutJanitorExterminator
   categories: [ HideSpawnMenu ]
   name: Дезинсектор
   description: Специализация уборщика на борьбе с вредителями и санитарной обработке.
