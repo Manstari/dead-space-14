@@ -1,3 +1,4 @@
+using Content.Shared.Actions;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.DeadSpace.Terminal;
@@ -46,3 +47,7 @@ public sealed class TerminalSaveFileMessage : BoundUserInterfaceMessage
         Content = content;
     }
 }
+
+
+public sealed partial class AgentRequestActionEvent : InstantActionEvent;
+public sealed partial class AgentReceiveActionEvent : InstantActionEvent;

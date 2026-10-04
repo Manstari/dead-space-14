@@ -1,7 +1,23 @@
 using System.Linq;
+using Content.Server.Administration;
+using Content.Server.Cargo.Components;
+using Content.Server.Cargo.Systems;
+using Content.Shared.Mind;
+using Content.Shared.Actions;
+using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Item;
+using Content.Shared.Mobs.Components;
+using Content.Shared.Mobs.Systems;
+using Content.Shared.Roles;
+using Content.Shared.Roles.Components;
 using Content.Shared.DeadSpace.Terminal;
 using Robust.Server.GameObjects;
+using Robust.Server.Containers;
+using Robust.Shared.Containers;
+using Robust.Shared.Physics;
+using Robust.Shared.Player;
 using Robust.Shared.Toolshed.Commands.GameTiming;
+using Content.Server.DeadSpace.Terminal;
 
 namespace Content.Server.Terminal;
 
@@ -9,6 +25,15 @@ public sealed class TerminalSystem : EntitySystem
 {
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
+    [Dependency] private readonly SharedActionsSystem _action = default!;
+    [Dependency] private readonly SharedHandsSystem _hands = default!;
+    [Dependency] private readonly ContainerSystem _container = default!;
+    [Dependency] private readonly MobStateSystem _mobState = default!;
+    [Dependency] private readonly EntityLookupSystem _lookup = default!;
+    [Dependency] private readonly PricingSystem _pricing = default!;
+    [Dependency] private readonly QuickDialogSystem _quickDialog = default!;
+
+    private readonly Dictionary<EntityUid, List<EntityUid>> _agentList = new();
 
     private sealed class PendingTransfer
     {
@@ -26,6 +51,9 @@ public sealed class TerminalSystem : EntitySystem
         SubscribeLocalEvent<TerminalComponent, TerminalCommandMessage>(OnCommand);
         SubscribeLocalEvent<TerminalComponent, ComponentShutdown>(OnShutdown);
         SubscribeLocalEvent<TerminalComponent, TerminalSaveFileMessage>(OnSaveFile);
+        SubscribeLocalEvent<RoleAddedEvent>(OnRoleAdded);
+        SubscribeLocalEvent<AgentRequestActionEvent>(OnAgentRequest);
+        SubscribeLocalEvent<AgentReceiveActionEvent>(OnAgentReceive);
     }
 
     public override void Update(float frameTime)
@@ -56,6 +84,76 @@ public sealed class TerminalSystem : EntitySystem
         _ips.Remove(comp.IpAdress);
         _directories.Remove(uid);
         _files.Remove(uid);
+        _agentList.Remove(uid);
+    }
+
+    private bool IsTraitor(MindComponent mind)
+    {
+        foreach (var role in mind.MindRoleContainer.ContainedEntities)
+        {
+            if (HasComp<TraitorRoleComponent>(role))
+                return true;
+        }
+        return false;
+    }
+
+    private void OnRoleAdded(RoleAddedEvent args)
+    {
+        if (args.Mind.OwnedEntity is not { } agent || !IsTraitor(args.Mind))
+            return;
+
+        var comp = EnsureComp<TaipanAgentCargoComponent>(agent);
+        comp.Buffer ??= _container.EnsureContainer<Container>(agent, TaipanAgentCargoComponent.BufferContainerId);
+        _action.AddAction(agent, ref comp.RequestActionEntity, comp.RequestActionPrototype);
+    }
+
+    private void OnAgentRequest(AgentRequestActionEvent args)
+    {
+        if (args.Handled || !TryComp<ActorComponent>(args.Performer, out var actor) || !TryComp<TaipanAgentCargoComponent>(args.Performer, out var agentComp) || agentComp.HasShipment || !string.IsNullOrWhiteSpace(agentComp.Request))
+            return;
+        var agent = args.Performer;
+        args.Handled = true;
+
+        _quickDialog.OpenDialog<string>(actor.PlayerSession, Loc.GetString("agent-request-title"), Loc.GetString("agent-request-prompt"), request =>
+        {
+            if (Deleted(agent) || !TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || agentComp.HasShipment || !string.IsNullOrWhiteSpace(agentComp.Request))
+                return;
+
+            request = request.Trim();
+            if (request.Length > 0)
+                agentComp.Request = request;
+        });
+    }
+
+    private void OnAgentReceive(AgentReceiveActionEvent args)
+    {
+        if (args.Handled || !TryComp<TaipanAgentCargoComponent>(args.Performer, out var agentComp) || !agentComp.HasShipment || agentComp.Buffer == null)
+            return;
+        args.Handled = true;
+        foreach (var item in agentComp.Buffer.ContainedEntities.ToArray())
+        {
+            if (!_container.Remove(item, agentComp.Buffer))
+                continue;
+            _hands.PickupOrDrop(args.Performer, item, checkActionBlocker: false, animate: false, dropNear: true);
+        }
+        agentComp.HasShipment = false;
+        agentComp.Request = null;
+        _action.RemoveAction(args.Performer, agentComp.ReceiveActionEntity);
+        agentComp.ReceiveActionEntity = null;
+    }
+
+    private List<EntityUid> GetTraitors()
+    {
+        var agents = new List<EntityUid>();
+        var query = EntityQueryEnumerator<TaipanAgentCargoComponent, MobStateComponent>();
+
+        while (query.MoveNext(out var uid, out _, out var mobState))
+        {
+            if (_mobState.IsAlive(uid, mobState))
+                agents.Add(uid);
+        }
+
+        return agents.OrderBy(agent => Name(agent), StringComparer.OrdinalIgnoreCase).ThenBy(agent => agent.ToString(), StringComparer.Ordinal).ToList();
     }
 
     private float GetDistance(EntityUid sender, EntityUid receiver)
@@ -316,7 +414,7 @@ public sealed class TerminalSystem : EntitySystem
         }
         if (args.Length > 1)
         {
-            _ui.SetUiState(sender, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-ping-many-args")}\n"));
+            _ui.SetUiState(sender, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-many-args")}\n"));
             return;
         }
         var address = args[0];
@@ -358,6 +456,89 @@ public sealed class TerminalSystem : EntitySystem
         });
     }
 
+    private string HandleAgents(EntityUid terminal, string[] args)
+    {
+        if (args.Length != 0)
+            return $"{Loc.GetString("agent-cargo-agents-usage")}\n";
+        var agents = GetTraitors();
+        _agentList[terminal] = agents;
+        var output = $"{Loc.GetString("agent-cargo-agents-header")}\n";
+        if (agents.Count == 0)
+            return output + $"{Loc.GetString("agent-cargo-no-agents")}\n";
+        for (var i = 0; i < agents.Count; i++)
+            output += $"[{i + 1:00}]. {Name(agents[i])}\n";
+        return output;
+    }
+
+    private string HandleOrders(EntityUid terminal, string[] args)
+    {
+        if (args.Length != 0)
+            return $"{Loc.GetString("agent-cargo-orders-usage")}\n";
+        if (!_agentList.TryGetValue(terminal, out var agents))
+        {
+            agents = GetTraitors();
+            _agentList[terminal] = agents;
+        }
+        var output = $"{Loc.GetString("agent-cargo-orders-header")}\n";
+        var found = false;
+
+        for (var i = 0; i < agents.Count; i++)
+        {
+            if (!TryComp<TaipanAgentCargoComponent>(agents[i], out var agentComp) || string.IsNullOrWhiteSpace(agentComp.Request))
+                continue;
+            found = true;
+            var status = agentComp.HasShipment ? Loc.GetString("agent-cargo-order-sent") : string.Empty;
+            output += $"[{i + 1:00}] {Name(agents[i])} - " + $"{Loc.GetString("agent-cargo-order-requested")}: {agentComp.Request} {status}\n";
+        }
+        if (!found)
+            output += $"{Loc.GetString("agent-cargo-no-orders")}\n";
+        return output;
+    }
+
+    private string HandleSend(EntityUid terminal, string[] args)
+    {
+        if (args.Length != 1 || !int.TryParse(args[0], out var agentNumber) || agentNumber < 1)
+            return $"{Loc.GetString("agent-cargo-send-usage")}\n";
+        if (!_agentList.TryGetValue(terminal, out var agents))
+        {
+            agents = GetTraitors();
+            _agentList[terminal] = agents;
+        }
+        if (agentNumber > agents.Count)
+            return $"{Loc.GetString("agent-cargo-agent-not-found")}\n";
+        var agent = agents[agentNumber - 1];
+        if (!TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || !TryComp<MobStateComponent>(agent, out var mobState) || !_mobState.IsAlive(agent, mobState))
+            return $"{Loc.GetString("agent-cargo-agent-unavailable")}\n";
+        if (agentComp.HasShipment)
+            return $"{Loc.GetString("agent-cargo-shipment-pending")}\n";
+        if (!TryComp(terminal, out TransformComponent? terminalComponent) || terminalComponent.GridUid is not { } gridUid)
+            return $"{Loc.GetString("agent-cargo-pallet-not-found")}\n";
+        agentComp.Buffer ??= _container.EnsureContainer<Container>(agent, TaipanAgentCargoComponent.BufferContainerId);
+
+        var candidates = new HashSet<EntityUid>();
+        var query = AllEntityQuery<CargoPalletComponent, TransformComponent>();
+
+        while (query.MoveNext(out var palletUid, out var pallet, out var palletTransform))
+        {
+            if (palletTransform.ParentUid != gridUid || !palletTransform.Anchored || (pallet.PalletType & BuySellType.Sell) == 0)
+                continue;
+            _lookup.GetEntitiesIntersecting(palletUid, candidates, LookupFlags.Dynamic | LookupFlags.Sundries);
+        }
+        var sent = 0;
+        foreach (var item in candidates)
+        {
+            if (!TryComp<ItemComponent>(item, out _) || HasComp<CargoSellBlacklistComponent>(item) || HasComp<MobStateComponent>(item) || !TryComp(item, out TransformComponent? itemTransform) || itemTransform.Anchored || _pricing.GetPrice(item) == 0)
+                continue;
+            if (_container.Insert(item, agentComp.Buffer))
+                sent++;
+        }
+        if (sent == 0)
+            return $"{Loc.GetString("agent-cargo-no-pallet-items")}\n";
+        agentComp.HasShipment = true;
+        _action.AddAction(agent, ref agentComp.ReceiveActionEntity, agentComp.ReceiveActionPrototype);
+        return $"{Loc.GetString("agent-cargo-shipment-sent", ("agent", Name(agent)))}\n";
+    }
+
     private void OnCommand(EntityUid uid, TerminalComponent component, TerminalCommandMessage message)
     {
         var parts = message.PromptText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -377,9 +558,25 @@ public sealed class TerminalSystem : EntitySystem
             HandleNano(uid, component, arguments);
             return;
         }
+        if (command.Equals("agents", StringComparison.OrdinalIgnoreCase))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleAgents(uid, arguments)));
+            return;
+        }
+        if (command.Equals("orders", StringComparison.OrdinalIgnoreCase))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleOrders(uid, arguments)));
+            return;
+        }
+        if (command.Equals("send", StringComparison.OrdinalIgnoreCase))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleSend(uid, arguments)));
+            return;
+        }
+
         var output = command switch
         {
-            "help" => $"help\nls\nclear\nwhoami\nhostname\nifconfig\nping (IP адрес)\ncd (путь до директории)\npwd\nls\nmkdir (Название создаваемой директории)\ntouch (Название создаваемого файла)\ncat (название файла)\nnano (название файла)",
+            "help" => $"help\nls\nclear\nwhoami\nhostname\nifconfig\nping (IP адрес)\ncd (путь до директории)\npwd\nls\nmkdir (Название создаваемой директории)\ntouch (Название создаваемого файла)\ncat (название файла)\nnano (название файла)\nagents\norders\nsend (номер агента)\n",
             "clear" => "\x01CLEAR",
             "whoami" => $"User\n",
             "ifconfig" => $"{GetIp(component)}\n",
