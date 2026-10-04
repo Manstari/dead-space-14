@@ -364,7 +364,7 @@
 
 - type: loadout
   id: JanitorTitleDisinfector
-  dummyEntity: LoadoutJanitorDisinfector
+  dummyEntity: LoadoutJanitorExterminator
   effects:
   - !type:JobTitleLoadoutEffect
     title: job-title-janitor-exterminator
