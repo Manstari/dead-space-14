@@ -393,7 +393,7 @@
   maxLimit: 1
   loadouts:
   - JanitorTitleCleaner
-  - JanitorTitleDisinfector
+  - JanitorTitleExterminator
   - JanitorTitlePlumber
 
 # Сервисный работник
