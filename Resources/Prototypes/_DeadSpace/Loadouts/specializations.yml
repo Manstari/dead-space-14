@@ -348,14 +348,14 @@
   id: LoadoutJanitorHousemaid
   categories: [ HideSpawnMenu ]
   name: Горничная
-  description: Специализация уборщицы на уборке, чисте кабинетов и обслуживании их обитателей.
+  description: Специализация уборщицы на уборке, чистке кабинетов и обслуживании их обитателей.
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
   id: LoadoutJanitorHouseman
   categories: [ HideSpawnMenu ]
   name: Горничный
-  description: Специализация уборщика на уборке, чисте кабинетов и обслуживании их обитателей.
+  description: Специализация уборщика на уборке, чистке кабинетов и обслуживании их обитателей.
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
