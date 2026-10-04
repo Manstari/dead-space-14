@@ -367,7 +367,7 @@
   dummyEntity: LoadoutJanitorDisinfector
   effects:
   - !type:JobTitleLoadoutEffect
-    title: job-title-janitor-disinfector
+    title: job-title-janitor-exterminator
   - !type:JobRequirementLoadoutEffect
     requirement:
       !type:RoleTimeRequirement
