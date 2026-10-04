@@ -363,7 +363,7 @@
       time: 18000
 
 - type: loadout
-  id: JanitorTitleDisinfector
+  id: JanitorTitleExterminator
   dummyEntity: LoadoutJanitorExterminator
   effects:
   - !type:JobTitleLoadoutEffect
