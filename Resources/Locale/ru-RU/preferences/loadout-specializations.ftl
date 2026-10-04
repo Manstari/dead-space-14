@@ -38,6 +38,8 @@ job-title-doctor-male-nurse = Медбрат
 job-title-janitor-exterminator = Дезинсектор
 job-title-janitor-cleaner = Клинер
 job-title-janitor-plumber = Сантехник
+job-title-janitor-housemaid = Горничная
+job-title-janitor-houseman = Горничный
 
 # Сервисный работник
 job-title-service-waiter = Официант

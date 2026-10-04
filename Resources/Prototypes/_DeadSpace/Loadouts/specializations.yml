@@ -345,10 +345,48 @@
 
 - type: entity
   parent: BaseLoadoutJanitorSpecialization
+  id: LoadoutJanitorHousemaid
+  categories: [ HideSpawnMenu ]
+  name: Горничная
+  description: Специализация уборщицы на уборке, чисте кабинетов и обслуживании их обитателей.
+
+- type: entity
+  parent: BaseLoadoutJanitorSpecialization
+  id: LoadoutJanitorHouseman
+  categories: [ HideSpawnMenu ]
+  name: Горничный
+  description: Специализация уборщика на уборке, чисте кабинетов и обслуживании их обитателей.
+
+- type: entity
+  parent: BaseLoadoutJanitorSpecialization
   id: LoadoutJanitorExterminator
   categories: [ HideSpawnMenu ]
   name: Дезинсектор
   description: Специализация уборщика на борьбе с вредителями и санитарной обработке.
+
+- type: loadout
+  id: JanitorTitleHousemaid
+  dummyEntity: LoadoutJanitorHousemaid
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-janitor-housemaid
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobJanitor
+      time: 18000
+
+- type: loadout
+  id: JanitorTitleHouseman
+  dummyEntity: LoadoutJanitorHouseman
+  effects:
+  - !type:JobTitleLoadoutEffect
+    title: job-title-janitor-houseman
+  - !type:JobRequirementLoadoutEffect
+    requirement:
+      !type:RoleTimeRequirement
+      role: JobJanitor
+      time: 18000
 
 - type: loadout
   id: JanitorTitlePlumber
@@ -393,6 +431,8 @@
   maxLimit: 1
   loadouts:
   - JanitorTitleCleaner
+  - JanitorTitleHousemaid
+  - JanitorTitleHouseman
   - JanitorTitleExterminator
   - JanitorTitlePlumber
 
