@@ -4,7 +4,7 @@ meta:
   engineVersion: 276.0.0
   forkId: ""
   forkVersion: ""
-  time: 10/07/2026 07:33:25
+  time: 09/24/2026 10:21:13
   entityCount: 10331
 maps:
 - 1
@@ -27358,14 +27358,6 @@ entities:
     - type: Transform
       pos: -22.5,-1.5
       parent: 2
-- proto: ComputerTaipanTerminal
-  entities:
-  - uid: 3789
-    components:
-    - type: Transform
-      rot: 3.141592653589793 rad
-      pos: 21.5,-26.5
-      parent: 2
 - proto: ComputerTaipanVirusEvolutionConsole
   entities:
   - uid: 8564
@@ -27823,10 +27815,10 @@ entities:
       parent: 2
 - proto: CrateInterdyneSecure
   entities:
-  - uid: 10331
+  - uid: 3789
     components:
     - type: Transform
-      pos: 22.5,-25.5
+      pos: 21.5,-25.5
       parent: 2
 - proto: CrateMedicalScrubs
   entities:
@@ -48103,7 +48095,7 @@ entities:
       parent: 6662
     - type: Physics
       canCollide: False
-- proto: LightReplacer
+- proto: LightReplacerEmpty
   entities:
   - uid: 6664
     components:
@@ -69173,7 +69165,7 @@ entities:
       parent: 2
     - type: Fixtures
       fixtures: {}
-- proto: WaterCoolerTransfer
+- proto: WaterCooler
   entities:
   - uid: 9857
     components:
