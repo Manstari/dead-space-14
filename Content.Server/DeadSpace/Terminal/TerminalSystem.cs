@@ -67,7 +67,7 @@ public sealed class TerminalSystem : EntitySystem
     private const int MaxRunSteps = 1000;
     private const int MaxRunOutputLength = 16_384;
     private static readonly Regex RunVariableRegex = new(@"%([A-Za-z_][A-Za-z0-9_]*)%", RegexOptions.Compiled);
-    private static readonly Regex RunVariableNameRegex = new(@"^[A\A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
+    private static readonly Regex RunVariableNameRegex = new(@"^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
     private static readonly Regex RunConditionRegex = new(@"^(.+?)\s*(==|!=)\s*(.+)$", RegexOptions.Compiled);
     private static readonly Regex RunForRegex = new(@"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s*\((.*)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private readonly List<PendingTransfer> _transfers = new();
@@ -366,7 +366,7 @@ public sealed class TerminalSystem : EntitySystem
                 return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Expected set NAME=value"))}\n";
             }
             var name = assignment[..equals].Trim();
-            if (!RunVariableRegex.IsMatch(name))
+            if (!RunVariableNameRegex.IsMatch(name))
             {
                 return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Invalid variable name"))}\n";
             }
