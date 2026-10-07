@@ -53,6 +53,11 @@ public sealed partial class TerminalWindow : DefaultWindow
         _outputScroll.VScroll = 0;
     }
 
+    public void SetOutput(string text)
+    {
+        _output.SetMessage(FormattedMessage.FromMarkupOrThrow(text));
+        ScrollToBottom();
+    }
     private void ScrollToBottom()
     {
         UserInterfaceManager.DeferAction(() =>

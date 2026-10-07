@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using Content.Server.Administration;
 using Content.Server.Cargo.Components;
 using Content.Server.Cargo.Systems;
@@ -42,6 +44,28 @@ public sealed class TerminalSystem : EntitySystem
         public float RemainingSeconds;
         public Action Deliver = default!;
     }
+
+    private sealed class RunInstruction
+    {
+        public string Kind;
+        public string Argument;
+        public string Variable;
+        public int Line;
+        public List<RunInstruction> Body = new();
+        public List<RunInstruction> ElseBody = new();
+        public RunInstruction(string kind, string arg, string var, int line)
+        {
+            Kind = kind;
+            Argument = arg;
+            Variable = var;
+            Line = line;
+        }
+    }
+
+    private const int MaxRunNesting = 8;
+    private const int MaxRunIterations = 100;
+    private const int MaxRunSteps = 1000;
+    private const int MaxRunOutputLength = 16_384;
     private readonly List<PendingTransfer> _transfers = new();
     private readonly Dictionary<EntityUid, Dictionary<string, string>> _files = new();
     public override void Initialize()
@@ -242,6 +266,317 @@ public sealed class TerminalSystem : EntitySystem
         Dirty(uid, comp);
     }
 
+    private static bool TryTokenizeCommand(string input, out List<string> parts)
+    {
+        parts = new List<string>();
+        var token = new StringBuilder();
+        var inQuotes = false;
+        var hasToken = false;
+
+        foreach (var character in input)
+        {
+            if (character == '"')
+            {
+                inQuotes = !inQuotes;
+                hasToken = true;
+                continue;
+            }
+            if (char.IsWhiteSpace(character) && !inQuotes)
+            {
+                if (hasToken)
+                {
+                    parts.Add(token.ToString());
+                    token.Clear();
+                    hasToken = false;
+                }
+                continue;
+            }
+            token.Append(character);
+            hasToken = true;
+        }
+
+        if (inQuotes)
+            return false;
+        if (hasToken)
+            parts.Add(token.ToString());
+        return true;
+    }
+
+    private static string ExpandRunVariables(string text, Dictionary<string, string> vars)
+    {
+        return Regex.Replace(text, @"%([A-Za-z_][A-Za-z0-9_]*)%", match => vars.TryGetValue(match.Groups[1].Value, out var value) ? value : string.Empty);
+    }
+
+    private static string UnquoteRunValue(string value)
+    {
+        return value.Length >= 2 && value[0] == '"' && value[^1] == '"' ? value[1..^1] : value;
+    }
+
+    private static List<string> SplitRunValues(string text)
+    {
+        var values = new List<string>();
+        var value = new StringBuilder();
+        var inQuotes = false;
+
+        foreach (var character in text)
+        {
+            if (character == '"')
+            {
+                inQuotes = !inQuotes;
+                value.Append(character);
+            }
+            else if (character == ',' && !inQuotes)
+            {
+                values.Add(UnquoteRunValue(value.ToString().Trim()));
+                value.Clear();
+            }
+            else
+            {
+                value.Append(character);
+            }
+        }
+        if (value.Length > 0)
+            values.Add(UnquoteRunValue(value.ToString().Trim()));
+        return values;
+    }
+
+    private static void RestoreRunVariable(Dictionary<string, string> vars, string name, bool hadPreviousValue, string? previousValue)
+    {
+        if (hadPreviousValue)
+            vars[name] = previousValue!;
+        else
+            vars.Remove(name);
+    }
+
+    private string ExecuteRunCommand(EntityUid uid, TerminalComponent comp, RunInstruction instruction, Dictionary<string, string> variables)
+    {
+        var line = ExpandRunVariables(instruction.Argument, variables);
+
+        if (line.StartsWith("set ", StringComparison.OrdinalIgnoreCase))
+        {
+            var assignment = line[4..].Trim();
+            var equals = assignment.IndexOf('=');
+
+            if (equals <= 0)
+            {
+                return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Expected set NAME=value"))}\n";
+            }
+            var name = assignment[..equals].Trim();
+            if (!Regex.IsMatch(name, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+            {
+                return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Invalid variable name"))}\n";
+            }
+
+            variables[name] = UnquoteRunValue(assignment[(equals + 1)..].Trim());
+            return string.Empty;
+        }
+        if (line.Equals("rem", StringComparison.OrdinalIgnoreCase) || line.StartsWith("rem ", StringComparison.OrdinalIgnoreCase) || line.StartsWith("::", StringComparison.Ordinal))
+            return string.Empty;
+
+        if (!TryTokenizeCommand(line, out var parts))
+        {
+            return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Unclosed quotation mark"))}\n";
+        }
+        if (parts.Count == 0)
+            return string.Empty;
+        var command = parts[0];
+        var args = parts.Skip(1).ToArray();
+        if (command.Equals("echo", StringComparison.OrdinalIgnoreCase))
+            return $"{string.Join(' ', args)}\n";
+        if (command.Equals("ping", StringComparison.OrdinalIgnoreCase) || command.Equals("nano", StringComparison.OrdinalIgnoreCase) || command.Equals("agents", StringComparison.OrdinalIgnoreCase) || command.Equals("orders", StringComparison.OrdinalIgnoreCase) || command.Equals("send", StringComparison.OrdinalIgnoreCase) || command.Equals("run", StringComparison.OrdinalIgnoreCase) || command.Equals("clear", StringComparison.OrdinalIgnoreCase))
+            return $"{Loc.GetString("terminal-run-command-unsupported", ("command", command))}\n";
+        var result = command.ToLowerInvariant() switch
+        {
+            "help" when args.Length == 0 => "help\nls\nclear\nwhoami\nhostname\nifconfig\npwd\nmkdir [dir]\ntouch [file]\ncat [file]\n",
+            "whoami" when args.Length == 0 => "User\n",
+            "ifconfig" when args.Length == 0 => $"{GetIp(comp)}\n",
+            "hostname" when args.Length == 0 => $"TEMPUser{comp.UserIndex}\n",
+            "pwd" when args.Length == 0 => $"{comp.CurrentDir}\n",
+            "ls" when args.Length == 0 => HandleLS(uid, comp),
+            "cd" => HandleCD(uid, comp, args),
+            "mkdir" => HandleMKDir(uid, comp, args),
+            "touch" => HandleTouch(uid, comp, args),
+            "cat" => HandleCat(uid, comp, args),
+            _ => "command not found\n"
+        };
+        return result.Length > 0 && !result.EndsWith('\n') ? $"{result}\n" : result;
+    }
+
+    private bool ExecuteRunBlock(EntityUid uid, TerminalComponent comp, List<RunInstruction> instructions, Dictionary<string, string> vars, StringBuilder output, ref int steps)
+    {
+        foreach (var instruction in instructions)
+        {
+            if (++steps > MaxRunSteps)
+            {
+                output.Append(Loc.GetString("terminal-run-limit")).Append('\n');
+                return false;
+            }
+            if (instruction.Kind == "if")
+            {
+                var condition = ExpandRunVariables(instruction.Argument, vars);
+                var match = Regex.Match(condition, @"^(.+?)\s*(==|!=)\s*(.+)$");
+
+                if (!match.Success)
+                {
+                    output.Append(Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Expected a comparison using == or !="))).Append('\n');
+                    continue;
+                }
+                var left = UnquoteRunValue(match.Groups[1].Value.Trim());
+                var right = UnquoteRunValue(match.Groups[3].Value.Trim());
+                var equal = left.Equals(right, StringComparison.OrdinalIgnoreCase);
+                var conditionIsTrue = match.Groups[2].Value == "==" ? equal : !equal;
+                var branch = conditionIsTrue ? instruction.Body : instruction.ElseBody;
+
+                if (!ExecuteRunBlock(uid, comp, branch, vars, output, ref steps))
+                    return false;
+                continue;
+            }
+            if (instruction.Kind == "for")
+            {
+                var values = SplitRunValues(ExpandRunVariables(instruction.Argument, vars));
+
+                if (values.Count > MaxRunIterations)
+                {
+                    output.Append(Loc.GetString("terminal-run-limit")).Append('\n');
+                    return false;
+                }
+                var hadPreviousValue = vars.TryGetValue(instruction.Variable, out var previousValue);
+
+                foreach (var value in values)
+                {
+                    if (++steps > MaxRunSteps)
+                    {
+                        output.Append(Loc.GetString("terminal-run-limit")).Append('\n');
+                        RestoreRunVariable(vars, instruction.Variable, hadPreviousValue, previousValue);
+                        return false;
+                    }
+                    vars[instruction.Variable] = value;
+
+                    if (!ExecuteRunBlock(uid, comp, instruction.Body, vars, output, ref steps))
+                    {
+                        RestoreRunVariable(vars, instruction.Variable, hadPreviousValue, previousValue);
+                        return false;
+                    }
+                }
+                RestoreRunVariable(vars, instruction.Variable, hadPreviousValue, previousValue);
+                continue;
+            }
+            var result = ExecuteRunCommand(uid, comp, instruction, vars);
+
+            if (output.Length + result.Length > MaxRunOutputLength)
+            {
+                output.Append(Loc.GetString("terminal-run-limit")).Append('\n');
+                return false;
+            }
+            output.Append(result);
+        }
+        return true;
+    }
+
+    private bool TryParseRunBlock(string[] lines, ref int index, int depth, out List<RunInstruction> instructions, out string? terminator, out string? error)
+    {
+        instructions = new List<RunInstruction>();
+        terminator = null;
+        error = null;
+        if (depth > MaxRunNesting)
+        {
+            error = "Maximum block nesting exceeded";
+            return false;
+        }
+
+        while (index < lines.Length)
+        {
+            var lineNumber = index + 1;
+            var line = lines[index].Trim();
+
+            if (line.Length == 0 || line.Equals("rem", StringComparison.OrdinalIgnoreCase) || line.StartsWith("rem ", StringComparison.OrdinalIgnoreCase) || line.StartsWith("::", StringComparison.Ordinal))
+            {
+                index++;
+                continue;
+            }
+
+            if (line.Equals("else", StringComparison.OrdinalIgnoreCase) || line.Equals("endif", StringComparison.OrdinalIgnoreCase) || line.Equals("endfor", StringComparison.OrdinalIgnoreCase))
+            {
+                terminator = line.ToLowerInvariant();
+                return true;
+            }
+            if (line.StartsWith("if ", StringComparison.OrdinalIgnoreCase))
+            {
+                var instruction = new RunInstruction("if", line[3..].Trim(), string.Empty, lineNumber);
+                index++;
+                if (!TryParseRunBlock(lines, ref index, depth + 1, out instruction.Body, out var bodyTerminator, out error))
+                    return false;
+                if (bodyTerminator == "else")
+                {
+                    index++;
+                    if (!TryParseRunBlock(lines, ref index, depth + 1, out instruction.ElseBody, out bodyTerminator, out error))
+                        return false;
+                }
+                if (bodyTerminator != "endif")
+                {
+                    error = "Expected endif";
+                    return false;
+                }
+
+                index++;
+                instructions.Add(instruction);
+                continue;
+            }
+            if (line.StartsWith("for ", StringComparison.OrdinalIgnoreCase))
+            {
+                var match = Regex.Match(line, @"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s*\((.*)\)$", RegexOptions.IgnoreCase);
+                if (!match.Success)
+                {
+                    error = "Expected: for NAME in (value1,value2)";
+                    return false;
+                }
+                var instruction = new RunInstruction("for", match.Groups[2].Value, match.Groups[1].Value, lineNumber);
+                index++;
+                if (!TryParseRunBlock(lines, ref index, depth + 1, out instruction.Body, out var bodyTerminator, out error))
+                    return false;
+                if (bodyTerminator != "endfor")
+                {
+                    error = "Expected endfor";
+                    return false;
+                }
+
+                index++;
+                instructions.Add(instruction);
+                continue;
+            }
+            instructions.Add(new RunInstruction("command", line, string.Empty, lineNumber));
+            index++;
+        }
+        return true;
+    }
+
+    private string HandleRun(EntityUid uid, TerminalComponent comp, string[] args)
+    {
+        if (args.Length != 1)
+            return $"{Loc.GetString("terminal-run-usage")}\n";
+        if (!args[0].EndsWith(".run", StringComparison.OrdinalIgnoreCase))
+            return $"{Loc.GetString("terminal-run-extension")}\n";
+        if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
+            return $"{Loc.GetString("terminal-fs-unaviable")}\n";
+
+        var path = NormalizePath(comp.CurrentDir, args[0]);
+
+        if (dirs.Contains(path) || !files.TryGetValue(path, out var content))
+            return $"{Loc.GetString("terminal-run-not-found", ("path", args[0]))}\n";
+        var lines = content.Replace("\r\n", "\n").Replace('\n', '\n').Split('\n');
+        var index = 0;
+        if (!TryParseRunBlock(lines, ref index, 0, out var instructions, out var terminator, out var error) || terminator != null)
+        {
+            var reason = error ?? "Unexpected block terminator";
+            return $"{Loc.GetString("terminal-run-syntax", ("line", index + 1), ("reason", reason))}\n";
+        }
+        var output = new StringBuilder();
+        var vars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var steps = 0;
+        ExecuteRunBlock(uid, comp, instructions, vars, output, ref steps);
+        return output.ToString();
+    }
+
     private string HandleLS(EntityUid uid, TerminalComponent comp)
     {
         if (!_directories.TryGetValue(uid, out var dirs) || !_files.TryGetValue(uid, out var files))
@@ -418,7 +753,10 @@ public sealed class TerminalSystem : EntitySystem
             return;
         }
         var address = args[0];
-        if (!TryFindByIp(address, out var receiver))
+        EntityUid receiver;
+        if (address.Equals("localhost", StringComparison.OrdinalIgnoreCase) || address == "127.0.0.1")
+            receiver = sender;
+        if (!TryFindByIp(address, out receiver))
         {
             _ui.SetUiState(sender, TerminalUiKey.Key, new TerminalBoundUserInterfaceState($"{Loc.GetString("terminal-ping-host-not-found", ("ip", address))}\n"));
             return;
@@ -541,13 +879,20 @@ public sealed class TerminalSystem : EntitySystem
 
     private void OnCommand(EntityUid uid, TerminalComponent component, TerminalCommandMessage message)
     {
-        var parts = message.PromptText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
+        if (!TryTokenizeCommand(message.PromptText, out var parts))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState("Unclosed quotation mark\n"));
+            return;
+        }
+        if (parts.Count == 0)
             return;
         var command = parts[0];
         var arguments = parts.Skip(1).Where(x => !x.StartsWith('-')).ToArray();
-
-        var flags = parts.Skip(1).Where(x => x.StartsWith('-')).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (command.Equals("run", StringComparison.OrdinalIgnoreCase))
+        {
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleRun(uid, component, arguments)));
+            return;
+        }
         if (command.Equals("ping", StringComparison.OrdinalIgnoreCase))
         {
             HandlePing(uid, arguments);

@@ -1,7 +1,14 @@
 terminal-ping-usage = ping [IP адрес]
 terminal-cd-usage = cd (путь до директории)
 terminal-mkdir-usage = mkdir (имя создаваемой директории)
-terminal-touch-usage = touch (Имя создаваемого файла)
+terminal-touch-usage = touch (имя создаваемого файла)
+terminal-cat-usage = cat (имя файла)
+terminal-run-usage = run (путь до .run файла)
+terminal-run-extension = Сценарий должен иметь расширение .run.
+terminal-run-not-found = Файл сценария { $path } не найден.
+terminal-run-syntax = Ошибка сценария, строка { $line }: { $reason }.
+terminal-run-limit == Сценарий остановлен: превышен лимит выполнения.
+terminal-run-command-unsupported = Команда { $command } не поддерживается внутри сценария.
 terminal-many-args = Слишком много аргументов.
 terminal-ping-host-not-found = При проверке связи не удалось обнаружить узел { $ip } \nПроверьте имя узла и повторите попытку.
 terminal-ping-network-error = Ошибка сети, проверьте подключение узлов и повторите попытку.

@@ -10,6 +10,7 @@ public sealed class TerminalBoundUserInterface : BoundUserInterface
     private TerminalWindow? _window;
     private readonly IEntityManager _entityManager = IoCManager.Resolve<IEntityManager>();
     private readonly Queue<string> _pendingCommands = new();
+    private string _history = "";
     public TerminalBoundUserInterface(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
     }
@@ -26,8 +27,11 @@ public sealed class TerminalBoundUserInterface : BoundUserInterface
         _window.EditorClosed += OnEditorClosed;
         if (!_entityManager.TryGetComponent<TerminalComponent>(Owner, out var terminal))
             return;
-        _window.AddOutput($"Welcome to TempOS 107.05 LTS\nSystem information\nMemory usage: {Random.Shared.Next(5, 10)}%\n IPv4 address for eth0: {terminal.IpAdress}\n");
-        _window.AddOutput($"[color=#16C60C]user@TEMPUser{terminal.UserIndex}[/color]:[color=##3B78FF]{terminal.CurrentDir}[/color]$ ");
+        if (string.IsNullOrEmpty(_history))
+        {
+            _history = $"Welcome to TempOS 107.05 LTS\n" + $"System information\n" + $"Memory usage: {Random.Shared.Next(5, 10)}%\n" + $"IPv4 address for eth0: {terminal.IpAdress}\n" + $"[color=#16C60C]user@TEMPUser{terminal.UserIndex}[/color]:" + $"[color=#3B78FF]{terminal.CurrentDir}[/color]$ ";
+        }
+        _window.SetOutput(_history);
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -49,8 +53,21 @@ public sealed class TerminalBoundUserInterface : BoundUserInterface
             return;
         }
 
+        if (terminalState.OutputText == "\x01Clear")
+        {
+            _history = "";
+        }
+        else
+        {
+            _history += terminalState.OutputText;
+            if (!terminalState.OutputText.EndsWith('\n'))
+                _history += "\n";
+        }
+
         _window?.AddOutput(terminalState.OutputText);
-        _window?.AddPrompt($"[color=#16C60C]user@TEMPUser{terminal.UserIndex}[/color]:[color=#3365D5]{terminal.CurrentDir}[/color]$ ");
+        var prompt = $"[color=#16C60C]user@TEMPUser{terminal.UserIndex}[/color]:" + $"[color=#3365D5]{terminal.CurrentDir}[/color]$ ";
+        _history += prompt;
+        _window?.AddPrompt(prompt);
     }
 
     private void OnFileSaved(string path, string content)
