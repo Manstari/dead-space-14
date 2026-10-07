@@ -66,6 +66,10 @@ public sealed class TerminalSystem : EntitySystem
     private const int MaxRunIterations = 100;
     private const int MaxRunSteps = 1000;
     private const int MaxRunOutputLength = 16_384;
+    private static readonly Regex RunVariableRegex = new(@"%([A-Za-z_][A-Za-z0-9_]*)%", RegexOptions.Compiled);
+    private static readonly Regex RunVariableNameRegex = new(@"^[A\A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
+    private static readonly Regex RunConditionRegex = new(@"^(.+?)\s*(==|!=)\s*(.+)$", RegexOptions.Compiled);
+    private static readonly Regex RunForRegex = new(@"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s*\((.*)\)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private readonly List<PendingTransfer> _transfers = new();
     private readonly Dictionary<EntityUid, Dictionary<string, string>> _files = new();
     public override void Initialize()
@@ -304,7 +308,7 @@ public sealed class TerminalSystem : EntitySystem
 
     private static string ExpandRunVariables(string text, Dictionary<string, string> vars)
     {
-        return Regex.Replace(text, @"%([A-Za-z_][A-Za-z0-9_]*)%", match => vars.TryGetValue(match.Groups[1].Value, out var value) ? value : string.Empty);
+        return RunVariableRegex.Replace(text, match => vars.TryGetValue(match.Groups[1].Value, out var value) ? value : string.Empty);
     }
 
     private static string UnquoteRunValue(string value)
@@ -362,7 +366,7 @@ public sealed class TerminalSystem : EntitySystem
                 return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Expected set NAME=value"))}\n";
             }
             var name = assignment[..equals].Trim();
-            if (!Regex.IsMatch(name, @"^[A-Za-z_][A-Za-z0-9_]*$"))
+            if (!RunVariableRegex.IsMatch(name))
             {
                 return $"{Loc.GetString("terminal-run-syntax", ("line", instruction.Line), ("reason", "Invalid variable name"))}\n";
             }
@@ -414,7 +418,7 @@ public sealed class TerminalSystem : EntitySystem
             if (instruction.Kind == "if")
             {
                 var condition = ExpandRunVariables(instruction.Argument, vars);
-                var match = Regex.Match(condition, @"^(.+?)\s*(==|!=)\s*(.+)$");
+                var match = RunConditionRegex.Match(condition);
 
                 if (!match.Success)
                 {
@@ -524,7 +528,7 @@ public sealed class TerminalSystem : EntitySystem
             }
             if (line.StartsWith("for ", StringComparison.OrdinalIgnoreCase))
             {
-                var match = Regex.Match(line, @"^for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\s*\((.*)\)$", RegexOptions.IgnoreCase);
+                var match = RunForRegex.Match(line);
                 if (!match.Success)
                 {
                     error = "Expected: for NAME in (value1,value2)";
