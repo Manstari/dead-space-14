@@ -31,7 +31,6 @@ public sealed class HandPullSystem : EntitySystem
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedJointSystem _joints = default!;
 
     private readonly Dictionary<int, HandPullOffer> _offers = new();
     private readonly Dictionary<EntityUid, int> _targetOffers = new();
