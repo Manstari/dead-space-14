@@ -1,5 +1,4 @@
 - type: constructionGraph
-  parent: FireBot
   id: FlameBot
   start: start
   graph:
