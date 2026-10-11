@@ -26125,7 +26125,7 @@ entities:
   - uid: 2304
     components:
     - type: MetaData
-      desc: A highly detailed schematic for an older shuttle. A skilled engineer might discern the rough layout of an exploration shuttle - modified nearly beyond recognition.
+      desc: A highly detailed schematic for an older shuttle. A еed engineer might discern the rough layout of an exploration shuttle - modified nearly beyond recognition.
       name: shuttle blueprint
     - type: Transform
       pos: -55.51698,-77.4413

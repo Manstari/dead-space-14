@@ -256620,22 +256620,6 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 5.5,16.5
       parent: 44049
-  - uid: 17143
-    components:
-    - type: Transform
-      parent: 17141
-    - type: Physics
-      canCollide: False
-    - type: InsideEntityStorage
-      storage: 17141
-  - uid: 17144
-    components:
-    - type: Transform
-      parent: 17141
-    - type: Physics
-      canCollide: False
-    - type: InsideEntityStorage
-      storage: 17141
 - proto: SmartFridge
   entities:
   - uid: 34962
