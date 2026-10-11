@@ -309,7 +309,6 @@
     - prefRoles: [ Traitor ]
       max: 8
       playerRatio: 10
-      components:
       blacklist:
         components:
         - AntagImmune
