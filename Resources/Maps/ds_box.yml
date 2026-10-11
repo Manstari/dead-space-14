@@ -123446,10 +123446,7 @@ entities:
         entity_storage: !type:Container
           showEnts: False
           occludes: True
-          ents:
-          - 17142
-          - 17143
-          - 17144
+          ents: []
         paper_label: !type:ContainerSlot
           showEnts: False
           occludes: True
