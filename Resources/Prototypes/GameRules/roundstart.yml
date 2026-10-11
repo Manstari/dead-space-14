@@ -336,7 +336,6 @@
     - prefRoles: [ Traitor ]
       max: 15
       playerRatio: 5
-      components:
       blacklist:
         components:
         - AntagImmune
@@ -365,7 +364,6 @@
       mindRoles:
       - MindRoleTraitorReinforcement
       sponsorsPriority: true
-      components:
 
 - type: entity
   id: Changeling
