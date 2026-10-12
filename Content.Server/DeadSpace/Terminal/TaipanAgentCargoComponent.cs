@@ -7,19 +7,13 @@ public sealed partial class TaipanAgentCargoComponent : Component
 {
     public const string BufferContainerId = "SyndicateAgentBuffer";
 
-    [DataField]
-    public string RequestActionPrototype = "ActionTraitorRequestCargo";
-
-    [DataField]
-    public string ReceiveActionPrototype = "ActionTraitorReceiveCargo";
-
     public string? Request;
 
     public bool HasShipment;
 
     public Container? Buffer;
 
-    public EntityUid? RequestActionEntity;
+    public EntityUid? ExchangeBag;
 
-    public EntityUid? ReceiveActionEntity;
+    public EntityUid? ShipmentTerminal;
 }

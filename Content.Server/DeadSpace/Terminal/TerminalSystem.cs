@@ -11,15 +11,18 @@ using Content.Shared.Item;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Roles;
+using Content.Shared.Inventory;
+using Content.Shared.Popups;
+using Content.Shared.Verbs;
+using Content.Shared.Storage.EntitySystems;
 using Content.Shared.Roles.Components;
 using Content.Shared.DeadSpace.Terminal;
+using Content.Server.DeadSpace.Terminal;
+using Content.Shared.Storage;
 using Robust.Server.GameObjects;
 using Robust.Server.Containers;
 using Robust.Shared.Containers;
-using Robust.Shared.Physics;
 using Robust.Shared.Player;
-using Robust.Shared.Toolshed.Commands.GameTiming;
-using Content.Server.DeadSpace.Terminal;
 
 namespace Content.Server.Terminal;
 
@@ -27,13 +30,15 @@ public sealed class TerminalSystem : EntitySystem
 {
     [Dependency] private readonly SharedUserInterfaceSystem _ui = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly SharedActionsSystem _action = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly ContainerSystem _container = default!;
     [Dependency] private readonly MobStateSystem _mobState = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly PricingSystem _pricing = default!;
     [Dependency] private readonly QuickDialogSystem _quickDialog = default!;
+    [Dependency] private readonly InventorySystem _inventory = default!;
+    [Dependency] private readonly SharedStorageSystem _storage = default!;
+    [Dependency] private readonly SharedPopupSystem _popup = default!;
 
     private readonly Dictionary<EntityUid, List<EntityUid>> _agentList = new();
 
@@ -80,8 +85,7 @@ public sealed class TerminalSystem : EntitySystem
         SubscribeLocalEvent<TerminalComponent, ComponentShutdown>(OnShutdown);
         SubscribeLocalEvent<TerminalComponent, TerminalSaveFileMessage>(OnSaveFile);
         SubscribeLocalEvent<RoleAddedEvent>(OnRoleAdded);
-        SubscribeLocalEvent<AgentRequestActionEvent>(OnAgentRequest);
-        SubscribeLocalEvent<AgentReceiveActionEvent>(OnAgentReceive);
+        SubscribeLocalEvent<AgentExchangeBagComponent, GetVerbsEvent<Verb>>(OnExchangeBagGetVerbs);
     }
 
     public override void Update(float frameTime)
@@ -125,49 +129,141 @@ public sealed class TerminalSystem : EntitySystem
         return false;
     }
 
+    private bool TryGetExchangeBag(InstantActionEvent args, out TaipanAgentCargoComponent agentComp, out EntityUid bag)
+    {
+        agentComp = null!;
+        bag = default;
+
+        if (args.Action.Comp.Container is not { } provider || !TryComp<TaipanAgentCargoComponent>(args.Performer, out var foundAgentComp) || foundAgentComp.ExchangeBag != provider || !Exists(provider))
+            return false;
+        agentComp = foundAgentComp;
+        bag = provider;
+        return true;
+    }
+
     private void OnRoleAdded(RoleAddedEvent args)
     {
         if (args.Mind.OwnedEntity is not { } agent || !IsTraitor(args.Mind))
             return;
-
         var comp = EnsureComp<TaipanAgentCargoComponent>(agent);
         comp.Buffer ??= _container.EnsureContainer<Container>(agent, TaipanAgentCargoComponent.BufferContainerId);
-        _action.AddAction(agent, ref comp.RequestActionEntity, comp.RequestActionPrototype);
+        if (comp.ExchangeBag is { } existingBag && Exists(existingBag))
+            return;
+        var exchangeBag = Spawn("SyndicateAgentExchangeBag", Transform(agent).Coordinates);
+        if (_inventory.TryGetSlotEntity(agent, "back", out var backpack) && backpack is { } backpackUid && _storage.Insert(backpackUid, exchangeBag, out _, user: agent, stackAutomatically: false))
+        {
+            comp.ExchangeBag = exchangeBag;
+            return;
+        }
+        _hands.PickupOrDrop(agent, exchangeBag, checkActionBlocker: false, animate: false, dropNear: true);
+        comp.ExchangeBag = exchangeBag;
     }
 
-    private void OnAgentRequest(AgentRequestActionEvent args)
+    private void OnExchangeBagGetVerbs(EntityUid uid, AgentExchangeBagComponent comp, GetVerbsEvent<Verb> args)
     {
-        if (args.Handled || !TryComp<ActorComponent>(args.Performer, out var actor) || !TryComp<TaipanAgentCargoComponent>(args.Performer, out var agentComp) || agentComp.HasShipment || !string.IsNullOrWhiteSpace(agentComp.Request))
+        if (!args.CanAccess || !TryComp<TaipanAgentCargoComponent>(args.User, out var agentComp) || agentComp.ExchangeBag != uid)
             return;
-        var agent = args.Performer;
-        args.Handled = true;
+
+        if (!agentComp.HasShipment && string.IsNullOrWhiteSpace(agentComp.Request))
+        {
+            args.Verbs.Add(new Verb
+            {
+                Text = Loc.GetString("agent-request-title"),
+                Act = () => RequestCargo(args.User),
+            });
+        }
+        if (agentComp.HasShipment)
+        {
+            args.Verbs.Add(new Verb
+            {
+                Text = Loc.GetString("agent-cargo-receive-verb"),
+                Act = () => ReceiveShipment(args.User, uid),
+            });
+        }
+    }
+
+    private void RequestCargo(EntityUid agent)
+    {
+        if (!TryComp<ActorComponent>(agent, out var actor) || !TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || agentComp.HasShipment || !string.IsNullOrWhiteSpace(agentComp.Request))
+            return;
 
         _quickDialog.OpenDialog<string>(actor.PlayerSession, Loc.GetString("agent-request-title"), Loc.GetString("agent-request-prompt"), request =>
         {
-            if (Deleted(agent) || !TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || agentComp.HasShipment || !string.IsNullOrWhiteSpace(agentComp.Request))
+            if (Deleted(agent) || !TryComp<TaipanAgentCargoComponent>(agent, out var currentComp) || currentComp.HasShipment || !string.IsNullOrWhiteSpace(currentComp.Request))
                 return;
 
             request = request.Trim();
-            if (request.Length > 0)
-                agentComp.Request = request;
+
+            if (request.Length > 1)
+                currentComp.Request = request;
         });
     }
 
-    private void OnAgentReceive(AgentReceiveActionEvent args)
+    private bool TryFindValuableOffer(TaipanAgentCargoComponent agentComp, out EntityUid offer)
     {
-        if (args.Handled || !TryComp<TaipanAgentCargoComponent>(args.Performer, out var agentComp) || !agentComp.HasShipment || agentComp.Buffer == null)
+        offer = default;
+        if (agentComp.ExchangeBag is not { } bag || !Exists(bag) || !TryComp<StorageComponent>(bag, out var storage) || storage.Container == null)
+            return false;
+
+        foreach (var item in storage.Container.ContainedEntities)
+        {
+            if (!TryComp<ItemComponent>(item, out _) || HasComp<CargoSellBlacklistComponent>(item) || HasComp<MobStateComponent>(item) || _pricing.GetPrice(item) <= 0)
+                continue;
+            offer = item;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ReceiveShipment(EntityUid agent, EntityUid bag)
+    {
+        if (!TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || agentComp.ExchangeBag != bag || !agentComp.HasShipment || agentComp.Buffer == null)
             return;
-        args.Handled = true;
+
+        if (!TryFindValuableOffer(agentComp, out var offer))
+        {
+            _popup.PopupEntity(Loc.GetString("agent-cargo-offer-missing"), agent, agent);
+            return;
+        }
+        if (agentComp.ShipmentTerminal is not { } terminal || Deleted(terminal))
+        {
+            _popup.PopupEntity(Loc.GetString("agent-cargo-terminal-missing"), agent, agent);
+            return;
+        }
+        if (!TryComp<StorageComponent>(bag, out var bagStorage) || bagStorage == null)
+        {
+            _popup.PopupEntity(Loc.GetString("agent-cargo-storage-unavailable"), agent, agent);
+            return;
+        }
+
+        var hasBackpack = _inventory.TryGetSlotEntity(agent, "back", out var backpack);
+
         foreach (var item in agentComp.Buffer.ContainedEntities.ToArray())
         {
-            if (!_container.Remove(item, agentComp.Buffer))
+            if (_storage.Insert(bag, item, out _, user: agent, stackAutomatically: false))
                 continue;
-            _hands.PickupOrDrop(args.Performer, item, checkActionBlocker: false, animate: false, dropNear: true);
+            if (hasBackpack && backpack is { } backpackUid && backpackUid != bag && backpackUid != bag && _storage.Insert(backpackUid, item, out _, user: agent, stackAutomatically: false))
+                continue;
+            if (!_container.Remove(item, agentComp.Buffer))
+            {
+                _popup.PopupEntity(Loc.GetString("agent-cargo-storage-unavailable"), agent, agent);
+                return;
+            }
+            _hands.PickupOrDrop(agent, item, checkActionBlocker: false, animate: false, dropNear: true);
         }
+
+        if (!_container.Remove(offer, bagStorage.Container))
+        {
+            _popup.PopupEntity(Loc.GetString("agent-cargo-offer-missing"), agent, agent);
+            return;
+        }
+
+        _transform.SetCoordinates(offer, Transform(terminal).Coordinates);
+
         agentComp.HasShipment = false;
         agentComp.Request = null;
-        _action.RemoveAction(args.Performer, agentComp.ReceiveActionEntity);
-        agentComp.ReceiveActionEntity = null;
+        agentComp.ShipmentTerminal = null;
     }
 
     private List<EntityUid> GetTraitors()
@@ -877,7 +973,7 @@ public sealed class TerminalSystem : EntitySystem
         if (sent == 0)
             return $"{Loc.GetString("agent-cargo-no-pallet-items")}\n";
         agentComp.HasShipment = true;
-        _action.AddAction(agent, ref agentComp.ReceiveActionEntity, agentComp.ReceiveActionPrototype);
+        agentComp.ShipmentTerminal = terminal;
         return $"{Loc.GetString("agent-cargo-shipment-sent", ("agent", Name(agent)))}\n";
     }
 
