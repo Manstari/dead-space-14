@@ -199,21 +199,25 @@ public sealed class TerminalSystem : EntitySystem
         });
     }
 
-    private bool TryFindValuableOffer(TaipanAgentCargoComponent agentComp, out EntityUid offer)
+    private bool TryFindValuableOffer(TaipanAgentCargoComponent agentComp, out List<EntityUid> offers)
     {
-        offer = default;
+        offers = new List<EntityUid>();
+
         if (agentComp.ExchangeBag is not { } bag || !Exists(bag) || !TryComp<StorageComponent>(bag, out var storage) || storage.Container == null)
             return false;
 
         foreach (var item in storage.Container.ContainedEntities)
         {
-            if (!TryComp<ItemComponent>(item, out _) || HasComp<CargoSellBlacklistComponent>(item) || HasComp<MobStateComponent>(item) || _pricing.GetPrice(item) <= 0)
-                continue;
-            offer = item;
-            return true;
+            if (!TryComp<ItemComponent>(item, out _) || HasComp<CargoSellBlacklistComponent>(item) || HasComp<MobStateComponent>(item) || _pricing.GetPrice(item) <= 10)
+            {
+                offers.Clear();
+                return false;
+            }
+
+            offers.Add(item);
         }
 
-        return false;
+        return offers.Count > 0;
     }
 
     private void ReceiveShipment(EntityUid agent, EntityUid bag)
@@ -221,45 +225,40 @@ public sealed class TerminalSystem : EntitySystem
         if (!TryComp<TaipanAgentCargoComponent>(agent, out var agentComp) || agentComp.ExchangeBag != bag || !agentComp.HasShipment || agentComp.Buffer == null)
             return;
 
-        if (!TryFindValuableOffer(agentComp, out var offer))
+        if (!TryFindValuableOffer(agentComp, out var offers))
         {
             _popup.PopupEntity(Loc.GetString("agent-cargo-offer-missing"), agent, agent);
             return;
         }
-        if (agentComp.ShipmentTerminal is not { } terminal || Deleted(terminal))
-        {
-            _popup.PopupEntity(Loc.GetString("agent-cargo-terminal-missing"), agent, agent);
-            return;
-        }
-        if (!TryComp<StorageComponent>(bag, out var bagStorage) || bagStorage == null)
+        if (!TryComp<StorageComponent>(bag, out var bagStorage) || bagStorage.Container == null)
         {
             _popup.PopupEntity(Loc.GetString("agent-cargo-storage-unavailable"), agent, agent);
             return;
         }
 
-        var hasBackpack = _inventory.TryGetSlotEntity(agent, "back", out var backpack);
+        _inventory.TryGetSlotEntity(agent, "back", out var backpack);
 
         foreach (var item in agentComp.Buffer.ContainedEntities.ToArray())
         {
-            if (_storage.Insert(bag, item, out _, user: agent, stackAutomatically: false))
+            if (_container.Remove(item, agentComp.Buffer) && backpack is { } backpackUid && backpackUid != bag && backpackUid != bag && _storage.Insert(backpackUid, item, out _, user: agent, stackAutomatically: false))
                 continue;
-            if (hasBackpack && backpack is { } backpackUid && backpackUid != bag && backpackUid != bag && _storage.Insert(backpackUid, item, out _, user: agent, stackAutomatically: false))
+            if (!Exists(item) || Transform(item).ParentUid != agentComp.Buffer.Owner)
                 continue;
             if (!_container.Remove(item, agentComp.Buffer))
-            {
-                _popup.PopupEntity(Loc.GetString("agent-cargo-storage-unavailable"), agent, agent);
-                return;
-            }
+                continue;
+
             _hands.PickupOrDrop(agent, item, checkActionBlocker: false, animate: false, dropNear: true);
         }
 
-        if (!_container.Remove(offer, bagStorage.Container))
+        if (agentComp.ShipmentTerminal is { } terminal && !Deleted(terminal) && TryComp<TerminalComponent>(terminal, out var terminalComponent) && terminalComponent.NetworkEnabled && TryComp(terminal, out TransformComponent? terminalTransform))
         {
-            _popup.PopupEntity(Loc.GetString("agent-cargo-offer-missing"), agent, agent);
-            return;
+            foreach (var offer in offers)
+            {
+                if (!_container.Remove(offer, bagStorage.Container))
+                    continue;
+                _transform.SetCoordinates(offer, terminalTransform!.Coordinates);
+            }
         }
-
-        _transform.SetCoordinates(offer, Transform(terminal).Coordinates);
 
         agentComp.HasShipment = false;
         agentComp.Request = null;
