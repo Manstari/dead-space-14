@@ -11,18 +11,18 @@ namespace Content.Client.DeadSpace.PdaArcade;
 
 public sealed class PdaCasinoBoard : PdaArcadeBoard
 {
-    private const int Width = 5;
-    private const int Height = 3;
+    private const int CasinoWidth = 5;
+    private const int CasinoHeight = 3;
     private const int ValueCount = 7;
-    private readonly int[,] _grid = new int[Width, Height];
-    private readonly bool[] _winningRows = new bool[Height];
-    private readonly bool[] _winningColumns = new bool[Width];
-    private readonly bool[] _winningDiagonalDown = new bool[Width - 2];
-    private readonly bool[] _winningDiagonalUp = new bool[Width - 2];
+    private readonly int[,] _grid = new int[CasinoWidth, CasinoHeight];
+    private readonly bool[] _winningRows = new bool[CasinoHeight];
+    private readonly bool[] _winningColumns = new bool[CasinoWidth];
+    private readonly bool[] _winningDiagonalDown = new bool[CasinoWidth - 2];
+    private readonly bool[] _winningDiagonalUp = new bool[CasinoWidth - 2];
     private readonly Random _random = new();
     private const float SpinDuration = 1f;
     private const float SymbolChangeInterval = 0.06f;
-    private readonly int[,] _resultGrid = new int[Width, Height];
+    private readonly int[,] _resultGrid = new int[CasinoWidth, CasinoHeight];
     private float _spinTime;
     private float _symbolChangeTime;
     private bool _spinning;
@@ -30,8 +30,8 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
     protected override void OnRestart()
     {
         Gain(100);
-        for (var x = 0; x < Width; x++)
-        for (var y = 0; y < Height; y++)
+        for (var x = 0; x < CasinoWidth; x++)
+        for (var y = 0; y < CasinoHeight; y++)
             _grid[x, y] = _random.Next(1, ValueCount + 1);
     }
 
@@ -47,7 +47,7 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
         var value = _grid[StartX, y];
         var length = 1;
 
-        for (var x = StartX + 1; x < Width; x++)
+        for (var x = StartX + 1; x < CasinoWidth; x++)
         {
             if (_grid[x, y] != value)
                 break;
@@ -86,9 +86,9 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
     private void CheckHorizontal()
     {
         Array.Clear(_winningRows);
-        for (var y = 0; y < Height; y++)
+        for (var y = 0; y < CasinoHeight; y++)
         {
-            for (var x = 0; x <= Width - 3; x++)
+            for (var x = 0; x <= CasinoWidth - 3; x++)
             {
                 var value = _grid[x, y];
                 if (x > 0 && _grid[x - 1, y] == value)
@@ -114,7 +114,7 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
         var value = _grid[x, StartY];
         var length = 1;
 
-        for (var y = StartY + 1; y < Height; y++)
+        for (var y = StartY + 1; y < CasinoHeight; y++)
         {
             if (_grid[x, y] != value)
                 break;
@@ -127,9 +127,9 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
     private void CheckVertical()
     {
         Array.Clear(_winningColumns);
-        for (var x = 0; x < Width; x++)
+        for (var x = 0; x < CasinoWidth; x++)
         {
-            for (var y = 0; y <= Height - 3; y++)
+            for (var y = 0; y <= CasinoHeight - 3; y++)
             {
                 var value = _grid[x, y];
                 if (y > 0 && _grid[x, y - 1] == value)
@@ -155,11 +155,11 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
         Array.Clear(_winningDiagonalDown);
         Array.Clear(_winningDiagonalUp);
 
-        for (var x = 0; x <= Width - 3; x++)
+        for (var x = 0; x <= CasinoWidth - 3; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < CasinoHeight; y++)
             {
-                if (y <= Height - 3)
+                if (y <= CasinoHeight - 3)
                 {
                     var value = _grid[x, y];
 
@@ -186,8 +186,8 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
 
     private void ForceWinningLine(int[,] grid)
     {
-        var y = _random.Next(Height);
-        var startX = _random.Next(Width - 2);
+        var y = _random.Next(CasinoHeight);
+        var startX = _random.Next(CasinoWidth - 2);
         var value = _random.Next(1, ValueCount + 1);
 
         for (var x = startX; x < startX + 3; x++)
@@ -196,9 +196,9 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
 
     private void CreateResult()
     {
-        for (var x = 0; x < Width; x++)
+        for (var x = 0; x < CasinoWidth; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < CasinoHeight; y++)
             {
                 _resultGrid[x, y] = _random.Next(1, ValueCount + 1);
             }
@@ -238,9 +238,9 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
         {
             _symbolChangeTime = 0f;
 
-            for (var x = 0; x < Width; x++)
+            for (var x = 0; x < CasinoWidth; x++)
             {
-                for (var y = 0; y < Height; y++)
+                for (var y = 0; y < CasinoHeight; y++)
                 {
                     _grid[x, y] = _random.Next(1, ValueCount + 1);
                 }
@@ -269,17 +269,17 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
         DrawFloor(handle);
 
         var inner = Inner(10);
-        var cell = (int)Math.Min(inner.Width / Width, inner.Height / Height);
+        var cell = (int)Math.Min(inner.Width / CasinoWidth, inner.Height / CasinoHeight);
         if (cell < 8)
             return;
 
-        var originX = (int)(inner.Left + (inner.Width - cell * Width) / 2);
-        var originY = (int)(inner.Top + (inner.Height - cell * Height) / 2);
+        var originX = (int)(inner.Left + (inner.Width - cell * CasinoWidth) / 2);
+        var originY = (int)(inner.Top + (inner.Height - cell * CasinoHeight) / 2);
         var font = PdaArcadeArt.Font(Math.Max(10, cell / 3));
 
-        for (var x = 0; x < Width; x++)
+        for (var x = 0; x < CasinoWidth; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < CasinoHeight; y++)
             {
                 var rect = new UIBox2(
                     originX + x * cell + 3,
@@ -320,25 +320,25 @@ public sealed class PdaCasinoBoard : PdaArcadeBoard
             }
         }
 
-        for (var y = 0; y < Height; y++)
+        for (var y = 0; y < CasinoHeight; y++)
         {
             if (!_winningRows[y])
                 continue;
 
             var lineY = originY + y * cell + cell / 2;
 
-            handle.DrawLine(new System.Numerics.Vector2(originX, lineY), new System.Numerics.Vector2(originX + Width * cell, lineY), Color.Red);
+            handle.DrawLine(new System.Numerics.Vector2(originX, lineY), new System.Numerics.Vector2(originX + CasinoWidth * cell, lineY), Color.Red);
         }
-        for (var x = 0; x < Width; x++)
+        for (var x = 0; x < CasinoWidth; x++)
         {
             if (!_winningColumns[x])
                 continue;
 
             var lineX = originX + x * cell + cell / 2;
 
-            handle.DrawLine(new System.Numerics.Vector2(lineX, originY), new System.Numerics.Vector2(lineX, originY + Height * cell), Color.Red);
+            handle.DrawLine(new System.Numerics.Vector2(lineX, originY), new System.Numerics.Vector2(lineX, originY + CasinoHeight * cell), Color.Red);
         }
-        for (var x = 0; x < Width - 2; x++)
+        for (var x = 0; x < CasinoWidth - 2; x++)
         {
             if (_winningDiagonalDown[x])
             {
