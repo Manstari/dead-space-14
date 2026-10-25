@@ -19,6 +19,8 @@ using Content.Shared.Roles.Components;
 using Content.Shared.DeadSpace.Terminal;
 using Content.Server.DeadSpace.Terminal;
 using Content.Shared.Storage;
+using Content.Shared.Administration.Logs;
+using Content.Shared.Database;
 using Robust.Server.GameObjects;
 using Robust.Server.Containers;
 using Robust.Shared.Containers;
@@ -39,6 +41,7 @@ public sealed class TerminalSystem : EntitySystem
     [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly SharedStorageSystem _storage = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
+    [Dependency] private readonly ISharedAdminLogManager _logs = default!;
 
     private readonly Dictionary<EntityUid, List<EntityUid>> _agentList = new();
 
@@ -249,6 +252,7 @@ public sealed class TerminalSystem : EntitySystem
 
             _hands.PickupOrDrop(agent, item, checkActionBlocker: false, animate: false, dropNear: true);
         }
+        var returnedItems = new List<string>();
 
         if (agentComp.ShipmentTerminal is { } terminal && !Deleted(terminal) && TryComp<TerminalComponent>(terminal, out var terminalComponent) && terminalComponent.NetworkEnabled && TryComp(terminal, out TransformComponent? terminalTransform))
         {
@@ -256,8 +260,14 @@ public sealed class TerminalSystem : EntitySystem
             {
                 if (!_container.Remove(offer, bagStorage.Container))
                     continue;
+                returnedItems.Add(Name(offer));
                 _transform.SetCoordinates(offer, terminalTransform!.Coordinates);
             }
+        }
+
+        if (returnedItems.Count > 0)
+        {
+            _logs.Add(LogType.Action, LogImpact.Low, $"{ToPrettyString(agent):actor} offered {returnedItems.Count} item ({string.Join(", ", returnedItems)}) to terminal");
         }
 
         agentComp.HasShipment = false;
@@ -932,7 +942,7 @@ public sealed class TerminalSystem : EntitySystem
         return output;
     }
 
-    private string HandleSend(EntityUid terminal, string[] args)
+    private string HandleSend(EntityUid terminal, string[] args, EntityUid sender)
     {
         if (args.Length != 1 || !int.TryParse(args[0], out var agentNumber) || agentNumber < 1)
             return $"{Loc.GetString("agent-cargo-send-usage")}\n";
@@ -962,15 +972,20 @@ public sealed class TerminalSystem : EntitySystem
             _lookup.GetEntitiesIntersecting(palletUid, candidates, LookupFlags.Dynamic | LookupFlags.Sundries);
         }
         var sent = 0;
+        var sentItems = new List<string>();
         foreach (var item in candidates)
         {
             if (!TryComp<ItemComponent>(item, out _) || HasComp<CargoSellBlacklistComponent>(item) || HasComp<MobStateComponent>(item) || !TryComp(item, out TransformComponent? itemTransform) || itemTransform.Anchored || _pricing.GetPrice(item) == 0)
                 continue;
             if (_container.Insert(item, agentComp.Buffer))
+            {
                 sent++;
+                sentItems.Add(Name(item));
+            }
         }
         if (sent == 0)
             return $"{Loc.GetString("agent-cargo-no-pallet-items")}\n";
+        _logs.Add(LogType.Action, LogImpact.Low, $"{ToPrettyString(sender):actor} sent {sent} item ({string.Join(", ", sentItems)}) to {ToPrettyString(agent):target} via {ToPrettyString(terminal):entity}");
         agentComp.HasShipment = true;
         agentComp.ShipmentTerminal = terminal;
         return $"{Loc.GetString("agent-cargo-shipment-sent", ("agent", Name(agent)))}\n";
@@ -1014,7 +1029,7 @@ public sealed class TerminalSystem : EntitySystem
         }
         if (command.Equals("send", StringComparison.OrdinalIgnoreCase))
         {
-            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleSend(uid, arguments)));
+            _ui.SetUiState(uid, TerminalUiKey.Key, new TerminalBoundUserInterfaceState(HandleSend(uid, arguments, message.Actor)));
             return;
         }
 
