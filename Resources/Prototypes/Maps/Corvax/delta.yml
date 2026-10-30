@@ -1,4 +1,4 @@
-﻿- type: gameMap
+- type: gameMap
   id: CorvaxDelta
   mapName: 'Delta'
   mapPath: /Maps/corvax_delta.yml

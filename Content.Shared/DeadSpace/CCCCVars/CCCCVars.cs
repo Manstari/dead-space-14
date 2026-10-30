@@ -124,6 +124,26 @@ public sealed class CCCCVars
     public static readonly CVarDef<bool> LavalandAutoGenerate =
         CVarDef.Create("lavaland.auto_generate", true, CVar.SERVERONLY);
 
+    /// <summary>
+    /// Small lavaland particles: sparks and ash over lava, petals, motes and fireflies of the chromite caves.
+    /// </summary>
+    public static readonly CVarDef<bool> LavalandParticles =
+        CVarDef.Create("lavaland.particles", true, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    /// <summary>
+    /// An action granted by an item goes back to the hotbar slot it had before when the item is picked up again,
+    /// pushing the actions after it along.
+    /// </summary>
+    public static readonly CVarDef<bool> ActionsRestoreItemSlots =
+        CVarDef.Create("interface.actions_restore_item_slots", true, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    /// <summary>
+    /// A gun with several shot types puts its switch on the hotbar while held. Off - only its key and using it in hand
+    /// switch it. Replicated: the server gives out the action.
+    /// </summary>
+    public static readonly CVarDef<bool> GunAmmoModeAction =
+        CVarDef.Create("interface.gun_ammo_mode_action", true, CVar.CLIENT | CVar.REPLICATED | CVar.ARCHIVE);
+
     public static readonly CVarDef<bool> AshWalkersEnabled =
         CVarDef.Create("lavaland.ash_walkers_enabled", true, CVar.SERVER | CVar.REPLICATED);
 
@@ -224,6 +244,9 @@ public sealed class CCCCVars
     */
     public static readonly CVarDef<bool> PopOutChat =
     CVarDef.Create("Chat.PopOut", false, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    public static readonly CVarDef<string> PopOutChatFailedBuild =
+        CVarDef.Create("Chat.PopOutFailedBuild", "", CVar.CLIENTONLY | CVar.ARCHIVE);
 
     public static readonly CVarDef<bool> PsychiatryEnabled =
         CVarDef.Create("deadspace.psychiatry_enabled", true, CVar.SERVER | CVar.REPLICATED);
@@ -395,7 +418,10 @@ public sealed class CCCCVars
         CVarDef.Create("deadspace.psychiatry_remap_mob_simple", 0.65f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryRemapMobAcute =
-        CVarDef.Create("deadspace.psychiatry_remap_mob_acute", 0.9f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_remap_mob_acute", 0.6f, CVar.SERVER | CVar.REPLICATED);
+
+    public static readonly CVarDef<float> PsychiatryRemapMobHumanoid =
+        CVarDef.Create("deadspace.psychiatry_remap_mob_humanoid", 0.3f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryRemapItemLatent =
         CVarDef.Create("deadspace.psychiatry_remap_item_latent", 0.35f, CVar.SERVER | CVar.REPLICATED);
@@ -404,13 +430,21 @@ public sealed class CCCCVars
         CVarDef.Create("deadspace.psychiatry_remap_item_simple", 0.45f, CVar.SERVER | CVar.REPLICATED);
 
     public static readonly CVarDef<float> PsychiatryRemapItemAcute =
-        CVarDef.Create("deadspace.psychiatry_remap_item_acute", 0.55f, CVar.SERVER | CVar.REPLICATED);
+        CVarDef.Create("deadspace.psychiatry_remap_item_acute", 0.2f, CVar.SERVER | CVar.REPLICATED);
 
     // На острой стадии подмена чаще монстр, чем животное.
     public static readonly CVarDef<float> PsychiatryRemapMonsterChance =
         CVarDef.Create("deadspace.psychiatry_remap_monster_chance", 200f / 255f, CVar.SERVER | CVar.REPLICATED);
 
-    // На сколько клеток вокруг видны подмены и мясные стены.
+    public static readonly CVarDef<float> PsychiatryPhantomMinFraction =
+        CVarDef.Create("deadspace.psychiatry_phantom_min_fraction", 0.35f, CVar.SERVER);
+
+    public static readonly CVarDef<float> PsychiatryPhantomMaxFraction =
+        CVarDef.Create("deadspace.psychiatry_phantom_max_fraction", 0.65f, CVar.SERVER);
+
+    public static readonly CVarDef<float> PsychiatryPhantomMinRoom =
+        CVarDef.Create("deadspace.psychiatry_phantom_min_room", 8f, CVar.SERVER);
+
     public static readonly CVarDef<float> PsychiatryRemapRadius =
         CVarDef.Create("deadspace.psychiatry_remap_radius", 12f, CVar.SERVER | CVar.REPLICATED);
 }

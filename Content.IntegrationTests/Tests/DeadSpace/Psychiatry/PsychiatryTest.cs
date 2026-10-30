@@ -1,7 +1,9 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using Content.Client.DamageState;
 using Content.Client.DeadSpace.Psychiatry;
+using Robust.Client.GameObjects;
 using Content.Shared.Traits.Assorted;
 using Robust.Server.Player;
 using Robust.Shared.Maths;
@@ -34,6 +36,7 @@ using Content.Shared.FixedPoint;
 using Content.Shared.Ghost;
 using Content.Shared.MedicalScanner;
 using Content.Shared.Mind;
+using Content.Shared.Mindshield.Components;
 using Content.Shared.Roles;
 using Content.Shared.VendingMachines;
 using Robust.Shared.GameObjects;
@@ -47,7 +50,6 @@ namespace Content.IntegrationTests.Tests.DeadSpace.Psychiatry;
 [TestOf(typeof(SchizophreniaComponent))]
 public sealed class PsychiatryTest : InteractionTest
 {
-    private static readonly ProtoId<PsychiatryRemapPrototype> MeatWallRemap = "PsychiatryRemapMeatWall";
     private static readonly ProtoId<ReagentPrototype> Synaptizine = "Synaptizine";
     private static readonly ProtoId<ReactionPrototype> NeuroClarityReaction = "NeuroClarity";
     private static readonly ProtoId<VendingMachineInventoryPrototype> NanoMedInventory = "NanoMedInventory";
@@ -137,6 +139,21 @@ public sealed class PsychiatryTest : InteractionTest
             Assert.That(ids, Does.Contain("EmoteBow"));
             Assert.That(ids, Does.Contain("EmoteTurn"));
             Assert.That(ids, Does.Contain("EmoteBreakdance"));
+        });
+    }
+
+    [Test]
+    public async Task SimpleDoesNotEscalateFromTriggers()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Simple, pillForced: false, reason: "test");
+            Assert.That(psych.TryOnsetOrEscalate(SPlayer, SchizophreniaStage.Latent, "slip", ignoreCooldown: true), Is.False);
+            Assert.That(psych.TryInhalePsychogen(SPlayer), Is.False);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
+            Assert.That(psych.TryApplyOrEscalate(SPlayer, SchizophreniaStage.Acute, pillForced: true, ignoreCooldown: true, reason: "pill"), Is.True);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Acute));
         });
     }
 
@@ -237,24 +254,17 @@ public sealed class PsychiatryTest : InteractionTest
     }
 
     [Test]
-    public async Task PatternPoolsByStage()
+    public void PatternPoolsByStage()
     {
         Assert.That(PsychiatryPattern.PickPool(SchizophreniaStage.Latent, 1, 1), Is.EqualTo(PsychiatryRemapPool.Animal));
         Assert.That(PsychiatryPattern.PickPool(SchizophreniaStage.Simple, 1, 1), Is.EqualTo(PsychiatryRemapPool.Animal));
         Assert.That(PsychiatryPattern.ShouldRemapMob(42, 7, SchizophreniaStage.None), Is.False);
         Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Incipient, 1f, 1f, 1f), Is.False);
         Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Latent, 1f, 1f, 1f), Is.False);
-        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Simple, 0f, 1f, 1f), Is.True);
+        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Simple, 0f, 1f, 1f), Is.False);
+        Assert.That(PsychiatryPattern.ShouldRemapMob(1, 1, SchizophreniaStage.Acute, 0f, 0f, 1f), Is.True);
         Assert.That(PsychiatryPattern.ShouldRemapItem(1, 1, SchizophreniaStage.Simple, 1f, 1f, 1f), Is.False);
-        Assert.That(PsychiatryPattern.IsMeatWall(new Vector2i(3, 9), 123, SchizophreniaStage.Simple), Is.False);
-
-        await Server.WaitAssertion(() =>
-        {
-            var protos = Server.ResolveDependency<IPrototypeManager>();
-            Assert.That(protos.TryIndex(MeatWallRemap, out var wall), Is.True);
-            Assert.That(wall!.Sprite, Is.InstanceOf<SpriteSpecifier.Rsi>());
-            Assert.That(((SpriteSpecifier.Rsi) wall.Sprite).RsiState, Is.EqualTo("full"));
-        });
+        Assert.That(PsychiatryPattern.ShouldRemapItem(1, 1, SchizophreniaStage.Acute, 0f, 0f, 1f), Is.True);
     }
 
     [Test]
@@ -650,6 +660,79 @@ public sealed class PsychiatryTest : InteractionTest
     }
 
     [Test]
+    public async Task MindShieldBlocksTraumaAndClearsIllness()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            SEntMan.AddComponent<MindShieldComponent>(SPlayer);
+            SEntMan.AddComponent<PsychiatryHeadTraumaComponent>(SPlayer);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+            Assert.That(psych.TryOnsetOrEscalate(SPlayer, SchizophreniaStage.Latent, "slip", ignoreCooldown: true), Is.False);
+            Assert.That(psych.TryInhalePsychogen(SPlayer), Is.False);
+            Assert.That(psych.TryStepStage(SPlayer), Is.False);
+            Assert.That(psych.TryApplyOrEscalate(SPlayer, SchizophreniaStage.Acute, pillForced: true, ignoreCooldown: true, reason: "pill"), Is.False);
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+            SEntMan.RemoveComponent<MindShieldComponent>(SPlayer);
+        });
+
+        await RunSeconds(1.5f);
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Incipient));
+            var psych = SEntMan.System<PsychiatrySystem>();
+            psych.ApplyNew(SPlayer, SchizophreniaStage.Simple, pillForced: false, reason: "test");
+            SEntMan.AddComponent<MindShieldComponent>(SPlayer);
+        });
+
+        await RunSeconds(1.5f);
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.HasComponent<SchizophreniaComponent>(SPlayer), Is.False);
+        });
+    }
+
+    [Test]
+    public async Task AdminStageStepRaisesOneStage()
+    {
+        await Server.WaitPost(() =>
+        {
+            var psych = SEntMan.System<PsychiatrySystem>();
+            Assert.That(psych.TryStepStage(SPlayer), Is.True);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Latent));
+            Assert.That(psych.TryStepStage(SPlayer), Is.True);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
+            Assert.That(psych.TryOnsetOrEscalate(SPlayer, SchizophreniaStage.Latent, "slip", ignoreCooldown: true), Is.False);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Simple));
+            Assert.That(psych.TryStepStage(SPlayer), Is.True);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Acute));
+            Assert.That(psych.TryStepStage(SPlayer), Is.False);
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Acute));
+        });
+    }
+
+    [Test]
+    public async Task AdminStageStepPillMetabolizes()
+    {
+        await Server.WaitAssertion(() =>
+        {
+            var solutions = SEntMan.System<SharedSolutionContainerSystem>();
+            Assert.That(SEntMan.TryGetComponent<BloodstreamComponent>(SPlayer, out var blood), Is.True);
+            Assert.That(solutions.TryGetSolution(SPlayer, blood!.BloodSolutionName, out var soln, out _), Is.True);
+            Assert.That(solutions.TryAddReagent(soln!.Value, "PsychiatryStageStep", FixedPoint2.New(5)), Is.True);
+        });
+
+        await RunSeconds(1.5f);
+
+        await Server.WaitAssertion(() =>
+        {
+            Assert.That(SEntMan.GetComponent<SchizophreniaComponent>(SPlayer).Stage, Is.EqualTo(SchizophreniaStage.Latent));
+        });
+    }
+
+    [Test]
     public async Task HeadTraumaStartsIncipient()
     {
         await Server.WaitPost(() =>
@@ -768,5 +851,155 @@ public sealed class PsychiatryTest : InteractionTest
             Assert.That(plan.Poses[plan.Poses.Count - 1].Tilt, Is.EqualTo(0f).Within(0.01f));
             Assert.That(plan.Poses[plan.Poses.Count - 1].Face, Is.EqualTo(0f).Within(0.01f));
         });
+    }
+
+    [Test]
+    public async Task SpawnedAnimalsKeepBodySprites()
+    {
+        Assert.That(PsychiatryClientSystem.SpriteKeyMatches(
+            "0:/Textures/Mobs/Animals/chicken.rsi:chicken-0",
+            "Mobs/Animals/chicken.rsi",
+            "chicken-0"), Is.True);
+        Assert.That(PsychiatryClientSystem.SpriteKeyMatches(
+            "1:Mobs/Animals/monkey.rsi:monkey",
+            "Mobs/Animals/monkey.rsi",
+            "monkey"), Is.True);
+        Assert.That(PsychiatryClientSystem.SpriteKeyMatches(
+            "0:/Textures/Mobs/Animals/chicken.rsi:chicken-0",
+            "Mobs/Animals/goat.rsi",
+            "goat"), Is.False);
+        Assert.That(PsychiatryClientSystem.SpriteKeyMatches(
+            "0:/Textures/Mobs/Animals/chicken.rsi:chicken-1",
+            "Mobs/Animals/chicken.rsi",
+            "chicken-0"), Is.False);
+
+        var chicken = await Spawn("MobChicken");
+        var monkey = await Spawn("MobMonkey");
+        var moth = await Spawn("MobMothroach");
+        var toolbox = await Spawn("ToolboxEmergency");
+        await RunSeconds(1.2f);
+
+        await Client.WaitAssertion(() =>
+        {
+            var psych = CEntMan.System<PsychiatryClientSystem>();
+            var sprites = CEntMan.System<SpriteSystem>();
+            var chickenUid = ToClient(chicken);
+            var monkeyUid = ToClient(monkey);
+            var mothUid = ToClient(moth);
+            var toolboxUid = ToClient(toolbox);
+
+            sprites.LayerSetRsiState((chickenUid, SpriteOf(chickenUid)), "movement", "chicken-0");
+            psych.SweepStuckSprites();
+            AssertMappedString(sprites, chickenUid, "movement", "chicken.rsi", "chicken-0");
+            AssertMappedEnum(sprites, monkeyUid, DamageStateVisualLayers.Base, "monkey.rsi", "monkey");
+            AssertMappedString(sprites, mothUid, "movement", "mothroach.rsi");
+            AssertVisibleRsi(SpriteOf(toolboxUid), "toolbox");
+            AssertNoRsi(SpriteOf(chickenUid), "goat.rsi");
+
+            var chickenSprite = SpriteOf(chickenUid);
+            psych.ApplyRemap(chickenUid, chickenSprite, new ResPath("Mobs/Animals/chicken.rsi"), "chicken-0", "курица", "PsychiatryRemapChicken");
+            Assert.That(CEntMan.HasComponent<PsychiatryRemapComponent>(chickenUid), Is.True);
+            psych.Restore(chickenUid);
+            AssertMappedString(sprites, chickenUid, "movement", "chicken.rsi", "chicken");
+
+            var monkeySprite = SpriteOf(monkeyUid);
+            psych.ApplyRemap(monkeyUid, monkeySprite, new ResPath("Mobs/Animals/goat.rsi"), "goat", "коза", "PsychiatryRemapGoat");
+            psych.ClearVisuals();
+            AssertMappedEnum(sprites, monkeyUid, DamageStateVisualLayers.Base, "monkey.rsi", "monkey");
+            AssertMappedString(sprites, chickenUid, "movement", "chicken.rsi");
+            AssertNoRsi(SpriteOf(monkeyUid), "goat.rsi");
+
+            var playerSprite = SpriteOf(CPlayer);
+            psych.ApplyRemap(CPlayer, playerSprite, new ResPath("Mobs/Animals/chicken.rsi"), "chicken-0", "курица", "PsychiatryRemapChicken");
+            psych.ClearVisuals();
+            AssertNoRsi(SpriteOf(CPlayer), "chicken.rsi");
+            Assert.That(CountLayers(SpriteOf(CPlayer)), Is.GreaterThan(0));
+            AssertMappedString(sprites, chickenUid, "movement", "chicken.rsi");
+
+            if (CEntMan.HasComponent<PsychiatryRemapComponent>(CPlayer))
+                CEntMan.RemoveComponent<PsychiatryRemapComponent>(CPlayer);
+            playerSprite = SpriteOf(CPlayer);
+            var playerLayers = CountLayers(playerSprite);
+            sprites.AddLayer((CPlayer, playerSprite), new SpriteSpecifier.Rsi(new ResPath("Mobs/Animals/chicken.rsi"), "chicken-0"));
+            Assert.That(CountLayers(playerSprite), Is.EqualTo(playerLayers + 1));
+            psych.SweepStuckSprites();
+            Assert.That(CountLayers(SpriteOf(CPlayer)), Is.EqualTo(playerLayers));
+            AssertNoRsi(SpriteOf(CPlayer), "chicken.rsi");
+            AssertMappedEnum(sprites, monkeyUid, DamageStateVisualLayers.Base, "monkey.rsi", "monkey");
+            AssertMappedString(sprites, mothUid, "movement", "mothroach.rsi");
+
+            var boxSprite = SpriteOf(toolboxUid);
+            psych.ApplyRemap(toolboxUid, boxSprite, new ResPath("Mobs/Animals/chicken.rsi"), "chicken-0", "курица", "PsychiatryRemapChicken");
+            psych.Restore(toolboxUid);
+            AssertVisibleRsi(SpriteOf(toolboxUid), "toolbox");
+            AssertNoRsi(SpriteOf(toolboxUid), "chicken.rsi");
+            AssertMappedString(sprites, chickenUid, "movement", "chicken.rsi", "chicken");
+        });
+    }
+
+    private SpriteComponent SpriteOf(EntityUid uid)
+    {
+        Assert.That(CEntMan.TryGetComponent(uid, out SpriteComponent? sprite), Is.True);
+        Assert.That(sprite, Is.Not.Null);
+        return sprite!;
+    }
+
+    private void AssertMappedString(SpriteSystem sprites, EntityUid uid, string key, string rsiTail, string? state = null)
+    {
+        var sprite = SpriteOf(uid);
+        Assert.That(sprites.LayerMapTryGet((uid, sprite), key, out var index, false), Is.True, key);
+        AssertLayer(sprite[index], rsiTail, state);
+    }
+
+    private void AssertMappedEnum(SpriteSystem sprites, EntityUid uid, DamageStateVisualLayers key, string rsiTail, string? state = null)
+    {
+        var sprite = SpriteOf(uid);
+        Assert.That(sprites.LayerMapTryGet((uid, sprite), key, out var index, false), Is.True, key.ToString());
+        AssertLayer(sprite[index], rsiTail, state);
+    }
+
+    private static void AssertLayer(ISpriteLayer layer, string rsiTail, string? state)
+    {
+        Assert.That(layer.Visible, Is.True, rsiTail);
+        Assert.That(LayerPath(layer), Does.Contain(rsiTail));
+        if (state != null)
+            Assert.That(layer.RsiState.ToString(), Does.Contain(state));
+    }
+
+    private static void AssertVisibleRsi(SpriteComponent sprite, string rsiTail)
+    {
+        var found = false;
+        foreach (ISpriteLayer layer in sprite.AllLayers)
+        {
+            var path = LayerPath(layer);
+            if (!path.Contains(rsiTail, StringComparison.OrdinalIgnoreCase))
+                continue;
+            Assert.That(layer.Visible, Is.True, rsiTail);
+            found = true;
+        }
+
+        Assert.That(found, Is.True, rsiTail);
+    }
+
+    private static void AssertNoRsi(SpriteComponent sprite, string rsiTail)
+    {
+        foreach (ISpriteLayer layer in sprite.AllLayers)
+        {
+            var path = LayerPath(layer);
+            Assert.That(path.Contains(rsiTail, StringComparison.OrdinalIgnoreCase), Is.False, path);
+        }
+    }
+
+    private static string LayerPath(ISpriteLayer layer)
+    {
+        return layer.ActualRsi?.Path.ToString() ?? string.Empty;
+    }
+
+    private static int CountLayers(SpriteComponent sprite)
+    {
+        var n = 0;
+        foreach (var _ in sprite.AllLayers)
+            n++;
+        return n;
     }
 }

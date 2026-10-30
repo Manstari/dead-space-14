@@ -1,4 +1,4 @@
-﻿- type: gameMap
+- type: gameMap
   id: Cluster
   mapName: 'Cluster'
   mapPath: /Maps/cluster.yml

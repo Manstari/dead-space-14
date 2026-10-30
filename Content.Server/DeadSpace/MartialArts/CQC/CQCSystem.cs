@@ -19,6 +19,7 @@ using Robust.Shared.Prototypes;
 using Content.Server.DeadSpace.MartialArts.CQC.Components;
 using Content.Shared.DeadSpace.MartialArts.CQC;
 using Content.Shared.Actions;
+using Content.Shared.DeadSpace.Actions;
 using Content.Shared.StatusEffectNew;
 using Content.Shared.DeadSpace.MartialArts.CQC.Components;
 using Content.Server.Physics.Controllers;
@@ -41,6 +42,7 @@ public sealed class CQCSystem : CQCSharedSystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
     [Dependency] private readonly SharedActionsSystem _action = default!;
+    [Dependency] private readonly ActionGateSystem _gate = default!;
     [Dependency] private readonly StatusEffectsSystem _statusEffects = default!;
     [Dependency] private readonly RayCastSystem _rayCast = default!;
 
@@ -113,7 +115,7 @@ public sealed class CQCSystem : CQCSharedSystem
     }
     private void DoCQCHit(Entity<CQCComponent> ent, EntityUid hitEntity)
     {
-        if (ent.Comp.SelectedCombo is not { } combo)
+        if (!ent.Comp.Concentrated || ent.Comp.SelectedCombo is not { } combo)
             return;
 
         switch (combo)
@@ -153,28 +155,14 @@ public sealed class CQCSystem : CQCSharedSystem
         {
             RemComp<CQCCantUseWeaponComponent>(ent);
             ent.Comp.SelectedCombo = null;
-
-            foreach (var actionEnt in ent.Comp.BaseCQCActionEntities)
-            {
-                _action.RemoveAction(ent.Owner, actionEnt);
-                QueueDel(actionEnt);
-            }
-
-            ent.Comp.BaseCQCActionEntities.Clear();
         }
         else
         {
             EnsureComp<CQCCantUseWeaponComponent>(ent);
-            foreach (var action in ent.Comp.BaseCQC)
-            {
-                EntityUid? actionEnt = null;
-                _action.AddAction(ent.Owner, ref actionEnt, action);
-
-                if (actionEnt != null)
-                    ent.Comp.BaseCQCActionEntities.Add(actionEnt.Value);
-            }
         }
+
         ent.Comp.Concentrated = !ent.Comp.Concentrated;
+        _gate.Set(ent.Owner, "cqc", ent.Comp.BaseCQC, ent.Comp.Concentrated);
         _action.SetToggled(ent.Comp.CQCConcentrationActionEntity, ent.Comp.Concentrated);
     }
 

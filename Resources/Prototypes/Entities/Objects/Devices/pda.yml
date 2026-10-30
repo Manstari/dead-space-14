@@ -122,6 +122,7 @@
     range: 500
   - type: CartridgeLoader
     uiKey: enum.PdaUiKey.Key
+    diskSpace: 99 # DS14
     preinstalled:
       - CrewManifestCartridge
       - NotekeeperCartridge
@@ -218,6 +219,7 @@
     - WantedListCartridge
     - BankCartridge # DS14
     - MessengerCartridge
+    - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BasePDA
@@ -234,6 +236,7 @@
       - MedTekCartridge
       - MessengerCartridge
       - BankCartridge # DS14
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BasePDA
@@ -481,6 +484,7 @@
     preinstalled:
     - CrewManifestCartridge
     - NewsReaderCartridge
+    - PdaGamesCartridge # DS14
   - type: Appearance
     appearanceDataInit:
      enum.PdaVisuals.PdaType:
@@ -550,6 +554,7 @@
     - NewsReaderCartridge
     - AstroNavCartridge
     - MessengerCartridge
+    - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BasePDA
@@ -596,6 +601,7 @@
       - NewsReaderCartridge
       - AstroNavCartridge
       - MessengerCartridge
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BasePDA
@@ -761,6 +767,7 @@
       - MessengerCartridge
       - BankCartridge
       - ScannerProgramCartridge
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BasePDA
@@ -958,6 +965,7 @@
     - LogProbeCartridge
     - BankCartridge # DS14
     - MessengerCartridge
+    - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BaseSecurityPDA
@@ -1031,6 +1039,7 @@
       - LogProbeCartridge
       - AstroNavCartridge
       - MessengerCartridge
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: CentcomPDA
@@ -1059,6 +1068,7 @@
       - AstroNavCartridge
       - BankCartridge
       - MessengerCartridge
+      - PdaGamesCartridge # DS14
   - type: Tag #  Ignore Chameleon tags
     tags:
     - DoorBumpOpener
@@ -1210,6 +1220,7 @@
       - NanoTaskCartridge
       - BankCartridge
       - MedTekCartridge #DS-14
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: [ SyndiPDA, BaseSyndicateContraband ]
@@ -1248,6 +1259,7 @@
       - NotekeeperCartridge
       - NanoTaskCartridge
       - MedTekCartridge
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: [ SyndiOperativePDA, BaseSyndicateContraband ]
@@ -1302,6 +1314,7 @@
       - WantedListCartridge
       - LogProbeCartridge
       - AstroNavCartridge
+      - PdaGamesCartridge # DS14
 
 - type: entity
   parent: ERTLeaderPDA
@@ -1477,6 +1490,7 @@
     - WantedListCartridge
     - LogProbeCartridge
     - MessengerCartridge
+    - PdaGamesCartridge # DS14
 
 - type: entity
   parent: BaseMedicalPDA
@@ -1506,6 +1520,7 @@
     - WantedListCartridge
     - MedTekCartridge
     - MessengerCartridge
+    - PdaGamesCartridge # DS14
 
 - type: entity
   parent: ClownPDA
