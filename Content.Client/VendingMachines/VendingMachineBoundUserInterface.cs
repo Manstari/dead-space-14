@@ -1,8 +1,5 @@
-using Content.Client.UserInterface.Controls;
-using Content.Client.VendingMachines.UI;
 using Content.Shared.VendingMachines;
 using Robust.Client.UserInterface;
-using Robust.Shared.Input;
 using System.Linq;
 using Content.Shared.VendingMachines.Components;
 using Content.Client.DeadSpace.VendingMachines.UI;
@@ -12,9 +9,6 @@ namespace Content.Client.VendingMachines;
 
 public sealed class VendingMachineBoundUserInterface(EntityUid owner, Enum uiKey) : BoundUserInterface(owner, uiKey)
 {
-    [ViewVariables]
-    private VendingMachineMenu? _menu;
-
     [ViewVariables]
     private VendingMachineKeypadMenu? _keypadMenu;
 
@@ -42,7 +36,6 @@ public sealed class VendingMachineBoundUserInterface(EntityUid owner, Enum uiKey
         var system = EntMan.System<VendingMachineSystem>();
         _cachedInventory = system.GetAllInventory(Owner);
 
-        _menu?.Populate(_cachedInventory, enabled);
         _keypadMenu?.Populate(_cachedInventory, enabled);
     }
 
@@ -52,27 +45,7 @@ public sealed class VendingMachineBoundUserInterface(EntityUid owner, Enum uiKey
 
         var system = EntMan.System<VendingMachineSystem>();
         _cachedInventory = system.GetAllInventory(Owner);
-        _menu?.UpdateAmounts(_cachedInventory, enabled);
         _keypadMenu?.UpdateAmounts(_cachedInventory, enabled);
-    }
-
-    private void OnItemSelected(GUIBoundKeyEventArgs args, ListData data)
-    {
-        if (args.Function != EngineKeyFunctions.UIClick)
-            return;
-
-        if (data is not VendorItemsListData { ItemIndex: var itemIndex })
-            return;
-
-        if (_cachedInventory.Count == 0)
-            return;
-
-        var selectedItem = _cachedInventory.ElementAtOrDefault(itemIndex);
-
-        if (selectedItem == null)
-            return;
-
-        SendPredictedMessage(new VendingMachineEjectMessage(selectedItem.Type, selectedItem.ID));
     }
 
     private void OnCodeApproved(int itemIndex)
@@ -95,12 +68,5 @@ public sealed class VendingMachineBoundUserInterface(EntityUid owner, Enum uiKey
             _keypadMenu.OnCodeApproved -= OnCodeApproved;
             _keypadMenu.Dispose();
         }
-
-        if (_menu == null)
-            return;
-
-        _menu.OnItemSelected -= OnItemSelected;
-        _menu.OnClose -= Close;
-        _menu.Dispose();
     }
 }
